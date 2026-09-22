@@ -1,0 +1,18 @@
+server:
+  port: ${PORT:8090}
+
+spring:
+  application:
+    name: codesense-prototype-api
+  jackson:
+    default-property-inclusion: non_null
+
+codesense:
+  data-dir: ${CODESENSE_DATA:data}
+  ollama-base-url: ${OLLAMA_BASE_URL:http://127.0.0.1:11434}
+  ollama-model: ${OLLAMA_MODEL:qwen3:8b}
+  openai-api-key: ${OPENAI_API_KEY:}
+  openai-base-url: ${OPENAI_BASE_URL:https://api.openai.com/v1}
+  gemini-api-key: ${GEMINI_API_KEY:}
+  groq-api-key: ${GROQ_API_KEY:}
+  llm-model: ${LLM_MODEL:}
