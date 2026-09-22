@@ -1,0 +1,14 @@
+node_modules/
+prototype/backend/data/
+prototype/backend/target/
+prototype/backend/.mvn/
+*.iml
+dist/
+.DS_Store
+*.log
+.env
+.env.local
+coverage/
+.idea/
+.vscode/
+*.tsbuildinfo
