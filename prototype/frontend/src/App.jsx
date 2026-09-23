@@ -5,9 +5,8 @@ import {
   confirmWorkshop,
   getWorkshop,
   startWorkshop,
-} from './api.ts'
-import { ParsonsBoard } from './ParsonsBoard.tsx'
-import type { PseudoLine, Session } from './types.ts'
+} from './api.js'
+import { ParsonsBoard } from './ParsonsBoard.jsx'
 import './App.css'
 
 const SESSION_KEY = 'codesense-workshop-id'
@@ -29,16 +28,16 @@ const SAMPLES = [
     label: 'SQL — should refuse',
     text: 'Write a SQL query to list students in CS101.',
   },
-] as const
+]
 
-const SLOT_LABEL: Record<Session['slot'], string> = {
+const SLOT_LABEL = {
   io: 'Inputs and output',
   strategy: 'Strategy',
   memory: 'Memory',
   stop: 'When to stop',
 }
 
-function shuffleParsons(lines: PseudoLine[]): PseudoLine[] {
+function shuffleParsons(lines) {
   const next = lines.map((line) => ({ ...line, indent: 0 }))
   for (let i = next.length - 1; i > 0; i -= 1) {
     const j = Math.floor(Math.random() * (i + 1))
@@ -64,11 +63,11 @@ function shuffleParsons(lines: PseudoLine[]): PseudoLine[] {
 
 export default function App() {
   const [draft, setDraft] = useState('')
-  const [session, setSession] = useState<Session | null>(null)
+  const [session, setSession] = useState(null)
   const [answer, setAnswer] = useState('')
-  const [edits, setEdits] = useState<PseudoLine[]>([])
-  const [arranged, setArranged] = useState<PseudoLine[]>([])
-  const [error, setError] = useState<string | null>(null)
+  const [edits, setEdits] = useState([])
+  const [arranged, setArranged] = useState([])
+  const [error, setError] = useState(null)
   const [pending, setPending] = useState(false)
 
   useEffect(() => {
@@ -92,7 +91,7 @@ export default function App() {
     }
   }, [session])
 
-  async function run<T>(work: () => Promise<T>): Promise<T | undefined> {
+  async function run(work) {
     setPending(true)
     setError(null)
     try {
@@ -110,7 +109,7 @@ export default function App() {
     }
   }
 
-  async function begin(question: string) {
+  async function begin(question) {
     const next = await run(() => startWorkshop(question))
     if (!next) return
     remember(next)
@@ -143,7 +142,7 @@ export default function App() {
     remember(next)
   }
 
-  function remember(next: Session) {
+  function remember(next) {
     localStorage.setItem(SESSION_KEY, next.id)
     setSession(next)
   }

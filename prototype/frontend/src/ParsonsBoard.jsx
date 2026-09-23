@@ -1,12 +1,5 @@
-import type { PseudoLine } from './types.ts'
-
-interface ParsonsBoardProps {
-  lines: PseudoLine[]
-  onChange: (lines: PseudoLine[]) => void
-}
-
-export function ParsonsBoard({ lines, onChange }: ParsonsBoardProps) {
-  function move(from: number, to: number) {
+export function ParsonsBoard({ lines, onChange }) {
+  function move(from, to) {
     if (to < 0 || to >= lines.length || from === to) return
     const next = lines.slice()
     const [item] = next.splice(from, 1)
@@ -15,7 +8,7 @@ export function ParsonsBoard({ lines, onChange }: ParsonsBoardProps) {
     onChange(next)
   }
 
-  function setIndent(index: number, delta: number) {
+  function setIndent(index, delta) {
     onChange(
       lines.map((line, i) =>
         i === index
