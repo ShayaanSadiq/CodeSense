@@ -1,0 +1,296 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="utf-8" />
+  <title>Project Proposal — CodeSense</title>
+  <style>
+    @page { size: A4; margin: 22mm 22mm 20mm 22mm; }
+    html, body { margin: 0; padding: 0; }
+    body {
+      font-family: "Times New Roman", Times, serif;
+      font-size: 12pt;
+      line-height: 1.35;
+      color: #111;
+      max-width: 170mm;
+      margin: 18mm auto 24mm;
+    }
+    h1.title {
+      text-align: center;
+      font-size: 18pt;
+      font-weight: 700;
+      margin: 0 0 6pt;
+    }
+    h2.project {
+      text-align: center;
+      font-size: 16pt;
+      font-weight: 700;
+      margin: 0 0 16pt;
+    }
+    h3 {
+      font-size: 13pt;
+      margin: 16pt 0 6pt;
+    }
+    p { margin: 0 0 8pt; text-align: justify; }
+    .meta p { margin: 0 0 3pt; text-align: left; }
+    ul { margin: 0 0 8pt 18pt; padding: 0; }
+    li { margin: 0 0 3pt; }
+    .subhead { font-weight: 700; margin: 8pt 0 4pt; }
+    @media print {
+      body { margin: 0; max-width: none; }
+      h3 { break-after: avoid; }
+    }
+  </style>
+</head>
+<body>
+
+  <h1 class="title">Project Proposal</h1>
+  <h2 class="project">CodeSense</h2>
+
+  <div class="meta">
+    <p><strong>Submitted By</strong></p>
+    <p><strong>Project Title:</strong> CodeSense</p>
+    <p><strong>Department:</strong> Computer Science &amp; Engineering</p>
+    <p><strong>Name:</strong> Shayaan Sadiq &nbsp;&nbsp;&nbsp; <strong>Roll No.:</strong> ________________</p>
+  </div>
+
+  <h3>Abstract</h3>
+  <p>
+    First-year programming labs ask a student to turn a console question into a working procedure.
+    Many students jump to syntax, copy a finished program, or accept a chatbot answer they cannot
+    defend. CodeSense is a web tutoring platform that walks the student through the logic of one
+    console procedure—inputs and output, strategy, memory, and when to stop—writes pseudocode
+    from those decisions, and checks that they can restore the plan as a Parsons puzzle. The same
+    session then runs the student’s Python, Java, or C program, records an execution trace, plays
+    that run back, and explains it against the plan the student already built. Off-scope work such
+    as theory essays, SQL, web pages, class design, and harmful requests is refused. The finished
+    product is a logic-building and execution-tracing tutor, not an automated homework generator.
+  </p>
+
+  <h3>1. Introduction</h3>
+  <p>
+    A typical lab question is a single console procedure: read values, compute a result, print it.
+    The hard part for many students is not the language. It is deciding what comes in, what must
+    come out, how to walk the data, what to remember, and when to stop. Existing tools either
+    judge a finished program, generate one in one shot, or teach syntax in isolation. None of them
+    force the student to author those decisions before code appears, then explain the real run
+    against that plan.
+  </p>
+  <p>
+    CodeSense is an AI-assisted logic-building and execution-tracing tutor for the browser.
+    The student pastes one lab question. The workshop asks for the four decisions one at a time.
+    A connected language model phrases the questions and writes the pseudocode lines, including
+    INPUT and OUTPUT. A rule checker drops leaked steps and junk lines. Wrong answers get three
+    tries, then the correct decision and a short explanation. The student then restores the
+    shuffled plan as a Parsons puzzle, writes a Python, Java, or C program for the same question,
+    and runs it. The platform records a JSONL trace, plays it back, and narrates the run only from
+    recorded facts, citing the plan line each step belongs to. Student programs execute in a
+    sandbox. Accounts keep the session so the full path—question, plan, program, trace, and
+    explanation—can be reviewed.
+  </p>
+
+  <h3>2. Problem Statement</h3>
+  <p>
+    Students face a gap between a written lab question and a working procedure. Chatbots give a
+    full solution. IDEs and judges only see source and output. Classroom tracing is done by hand
+    on paper. There is no single academic platform that (a) keeps the student on one console
+    procedure, (b) makes them author IO, strategy, memory, and stop, (c) turns those decisions
+    into pseudocode they must rearrange, and (d) runs their program and explains the actual
+    execution against that plan. Organizations that teach programming therefore still rely on
+    disconnected tools and cannot tell whether a student understood the algorithm or only pasted
+    it.
+  </p>
+
+  <h3>3. Motivation</h3>
+  <p>
+    Lab courses still grade the program, not the plan. Students who cannot name the input, the
+    loop, or the stopping condition will not be able to debug a run or defend a viva. A tutor
+    that asks those decisions first, refuses theory and multi-file projects, runs the student’s
+    own program, and ties every narrated step to a trace fact and a plan line reduces blind
+    copying. CodeSense puts that full path in one web application: plan, program, trace, and
+    explanation for a single console-procedure lab.
+  </p>
+
+  <h3>4. Objectives to improve</h3>
+  <ul>
+    <li>Accept one console-procedure question and refuse off-scope or harmful requests in one sentence.</li>
+    <li>Walk IO, strategy, memory, and stop as a state machine; skip memory and stop when the work is compute-once.</li>
+    <li>Let the model phrase questions and write pseudocode, with a leak checker and rule fallbacks.</li>
+    <li>Grade each decision (three tries, then reveal the correct answer and why).</li>
+    <li>Finish the plan with a Parsons puzzle that checks order and indent.</li>
+    <li>Run a student Python, Java, or C program and record a JSONL execution trace.</li>
+    <li>Play the trace back (line, stack, values) without inventing facts.</li>
+    <li>Narrate the run in 1–3 sentences per step, each citing a pseudocode line; flag plan lines the run never did.</li>
+    <li>Keep keys and model calls on the server; run student code in a sandbox that can be defended.</li>
+  </ul>
+
+  <h3>5. Existing System</h3>
+  <p>
+    Current practice relies on an IDE, a programming judge, a chatbot, or a paper dry-run.
+    ChatGPT and similar tools emit a finished program. LeetCode-style judges score hidden tests.
+    Python Tutor and debugger UIs show a run but do not start from the lab question or from a
+    student-authored plan. Parsons tools exist for rearranging given lines, not for lines the
+    student just decided. These pieces are powerful but disconnected. Reporting whether the
+    student understood IO versus the loop is still manual.
+  </p>
+
+  <h3>6. Proposed System</h3>
+  <p>
+    CodeSense is a single web platform for one console-procedure lab from question to explained
+    run. The student pastes a question. The workshop builds pseudocode decision by decision,
+    then shuffles it as a Parsons puzzle. The same session takes a console program in Python,
+    Java, or C, records a trace, plays it, and explains it against the plan. A local or hosted
+    language model writes questions, lines, and narration; a checker and the trace dump stop the
+    model from inventing steps or values. Accounts store the session. Student code runs in a
+    sandbox. The finished product is that whole path, not a plan-only demo and not a chatbot
+    that emits a program in one click.
+  </p>
+
+  <h3>7. Advanced System Architecture</h3>
+  <p><strong>Frontend:</strong> React 19, Vite, JavaScript</p>
+  <p><strong>Backend:</strong> Java 21, Spring Boot, Maven</p>
+  <p><strong>Persistence:</strong> accounts and saved sessions</p>
+  <p><strong>AI layer:</strong> Ollama (local, default qwen3:8b) or optional Gemini / Groq / OpenAI-compatible API</p>
+  <p class="subhead">Logic-building engine:</p>
+  <ul>
+    <li>Suitability and refusal</li>
+    <li>Slot questions (IO, strategy, memory, stop)</li>
+    <li>Leak checker and phrasing fallbacks</li>
+    <li>Answer grading (three tries)</li>
+    <li>LLM plan generation (INPUT, OUTPUT, and remaining lines)</li>
+    <li>Parsons shuffle, order, and indent check</li>
+  </ul>
+  <p class="subhead">Execution-tracing engine:</p>
+  <ul>
+    <li>Python, Java (JDI), and C (gcc -g and GDB) runners</li>
+    <li>Shared JSONL execution trace</li>
+    <li>Playback of line, stack, and values</li>
+    <li>Narration from trace facts only</li>
+    <li>Plan check (each step cites a pseudocode line)</li>
+    <li>Sandbox for student programs</li>
+  </ul>
+
+  <h3>8. Question-to-Plan Workshop</h3>
+  <p>
+    The student pastes one lab question. The first prompt is fixed: what comes in, and what must
+    come out? Later questions are written by the model from the question and the answers so far.
+    A checker drops any prompt that already contains a step (SET, FOR, IF, a named algorithm, or
+    an assignment) and falls back to the next fixed slot prompt. “I don’t know” asks a narrower
+    question and does not consume a grade try.
+  </p>
+
+  <h3>9. Suitability and Refusal</h3>
+  <p>
+    Only a single console procedure is accepted. Theory, SQL, web or GUI work, class design,
+    debugging dumps, multi-procedure projects, and harmful requests (for example building a weapon
+    or malware) are refused in one fixed sentence. A positive console-procedure check stops the
+    model from treating a dangerous request as a normal lab.
+  </p>
+
+  <h3>10. Decision Grading</h3>
+  <p>
+    Each slot answer is marked right or wrong. A wrong answer may be tried twice more. On the
+    third miss the platform shows the correct decision and a short explanation, then continues.
+    “I don’t know” never fills in the algorithm and never spends a try. This keeps the student
+    in the workshop instead of handing them the plan after one blank.
+  </p>
+
+  <h3>11. Parsons Puzzle Module</h3>
+  <p>
+    After the lines are confirmed, the finished plan is the hidden solution (ids and indent).
+    The student sees a shuffled copy with indent cleared. Check passes only if order and indent
+    both match. The sidebar that would show the solution is hidden during this step.
+  </p>
+
+  <h3>12. LLM Integration</h3>
+  <p>
+    Spring Boot calls a chat API. The default is a local Ollama model so a lab machine can run
+    without a paid key. Gemini, Groq, or OpenAI can be configured on the server. The model
+    phrases workshop questions, writes pseudocode, grades decisions, and narrates a run from
+    the trace. If the model returns junk (bare RETURN, mashed IF/FOR, tautologies) or invents a
+    value that is not in the dump, the rule engine and the trace checker drop that output.
+  </p>
+
+  <h3>13. Program Runner</h3>
+  <p>
+    After the plan exists, the student pastes a console program for the same question in Python,
+    Java, or C. The runner uses the inputs already decided in the IO slot, compiles or interprets
+    the program as needed (Java through JDI, C through gcc -g and GDB), captures output, and
+    writes one JSONL trace so all three languages stay comparable.
+  </p>
+
+  <h3>14. Execution Tracing</h3>
+  <p>
+    The trace is the evidence: which line ran, stack depth, variable values, which branch was
+    taken, and when the program stopped. Pointers in C are an address plus one dereference.
+    Narration is not allowed to invent a value that is not in this dump.
+  </p>
+
+  <h3>15. Trace Playback</h3>
+  <p>
+    A playback view steps through the JSONL record: current line, stack, and values. The student
+    sees the run the same way a debugger would. Playback shows only recorded facts; it does not
+    ask the model to guess what happened.
+  </p>
+
+  <h3>16. Narration Engine</h3>
+  <p>
+    The model writes one to three sentences from the current trace facts only. Invented values
+    are rejected. The tone is a lab viva: what happened, not a new algorithm. Narration sits on
+    top of playback; it does not replace the dump.
+  </p>
+
+  <h3>17. Plan Check, Sandbox, and Accounts</h3>
+  <p>
+    Each narrated step cites a pseudocode line. A plan line the run never executed is flagged,
+    so a mismatch between the student’s plan and their program is visible. Student programs run
+    under time and resource limits, with no network and no host file system. A signed-in student
+    can save the session and reopen the full path: question, decisions, plan, program, trace,
+    and explanation.
+  </p>
+
+  <h3>18. Technology Stack</h3>
+  <p><strong>Frontend:</strong> React 19, Vite, JavaScript</p>
+  <p><strong>Backend:</strong> Java 21, Spring Boot, Maven</p>
+  <p><strong>Persistence:</strong> accounts and saved sessions</p>
+  <p><strong>AI:</strong> Ollama / optional Gemini, Groq, or OpenAI-compatible API</p>
+  <p><strong>Runners:</strong> Python, Java JDI, gcc and GDB</p>
+  <p><strong>Deploy:</strong> Docker Compose (workshop UI on port 43124, API on port 8090)</p>
+
+  <h3>19. Expected Outcomes</h3>
+  <ul>
+    <li>A complete tutor: decisions, graded tries, LLM pseudocode, and a Parsons check.</li>
+    <li>Refusal of off-scope and harmful questions without producing a plan.</li>
+    <li>A traced run of the student’s Python, Java, or C program against that plan.</li>
+    <li>Narration a teacher can check against the dump and the plan.</li>
+    <li>A session a student can defend in a viva: they authored the decisions, then explained the run.</li>
+  </ul>
+
+  <h3>20. Future Scope</h3>
+  <ul>
+    <li>Multi-procedure labs (helpers and how they call each other).</li>
+    <li>Teacher analytics and a small question bank by unit.</li>
+    <li>Adaptive next question from saved traces.</li>
+    <li>In-browser editor with breakpoints aligned to the plan.</li>
+    <li>Exam mode and stronger sandbox limits.</li>
+    <li>One more syllabus language or an editor plugin, still using the same workshop.</li>
+  </ul>
+  <p>
+    After the full platform exists, CodeSense could grow into multi-procedure labs, teacher
+    analytics, an in-browser debugger tied to the plan, and adaptive next questions based on
+    each student’s traces. It would still stay a console-procedure tutor—not a general homework
+    chatbot or an LMS.
+  </p>
+
+  <h3>21. Conclusion</h3>
+  <p>
+    CodeSense is an AI-assisted tutor that makes a student build the logic of one console
+    procedure, write a program for that plan, and then explain the real run against the
+    decisions they already made. The finished product is that full path in one website: workshop,
+    Parsons puzzle, sandboxed Python / Java / C run, trace, playback, and narration. The
+    platform stays narrow on purpose: one lab question, one procedure, evidence from the
+    student’s decisions and from the dump—not a generated essay or a finished program handed
+    over in one click.
+  </p>
+
+</body>
+</html>
