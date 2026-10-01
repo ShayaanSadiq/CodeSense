@@ -23,11 +23,7 @@ const SAMPLES = [
   {
     label: 'Rectangle area',
     text: 'Compute the area of a rectangle given length and width.',
-  },
-  {
-    label: 'SQL — should refuse',
-    text: 'Write a SQL query to list students in CS101.',
-  },
+  }
 ]
 
 const SLOT_LABEL = {
@@ -206,7 +202,7 @@ export default function App() {
             disabled={pending || draft.trim().length < 8}
             onClick={() => begin(draft)}
           >
-            {pending ? 'Checking…' : 'Start the workshop'}
+            {pending ? 'Checking…' : 'Start'}
           </button>
         </section>
       )}
