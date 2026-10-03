@@ -1,3 +1,7 @@
+<p align="center">
+  <img src="frontend/public/logo.png" alt="CodeSense" width="220" />
+</p>
+
 # CodeSense prototype — question to plan
 
 A student pastes one console-procedure question, answers the decisions, and gets pseudocode from the model. Wrong answers are graded (three tries, then the correct decision). The last step is a shuffled Parsons puzzle: restore order and indent.
@@ -53,7 +57,7 @@ A wrong decision is marked wrong. Three misses show the correct answer and a sho
 
 ## How the questions are produced
 
-The first question is fixed: *What comes in, and what must come out?*
+The first question is fixed: *Name what data the program is given, and what one result it should give back.*
 
 Later questions are written by the connected model from the lab question and the answers so far. A checker drops any question that already contains a step (`SET`, `FOR`, `IF`, a named algorithm, or an assignment). That turn falls back to the next fixed prompt: strategy, memory, or stop.
 
@@ -61,7 +65,7 @@ A line of pseudocode is written by the model from the lab question and the decis
 
 ## LLM
 
-The API is **Spring Boot** (Java 21). The prototype uses a local [Ollama](https://ollama.com) model when one is running. On this machine that is **qwen3:8b**.
+The API is **Spring Boot** (Java 21). Every model call goes through **Spring AI** `ChatClient`. The default local model is [Ollama](https://ollama.com) **qwen3:8b**.
 
 The first local answer can take a minute while the model loads. If Ollama is stopped, the rule engine still runs the demo so the page does not die.
 
@@ -83,6 +87,12 @@ cd prototype/backend
 mvn test
 ```
 
-## Out of scope here
+## Later installments
 
-Program runner, JSONL trace, playback, narration, accounts, sandbox. Those start at installment 1 and 2.
+2. Pseudocode translator — glossary, mark trigger words, assemble the plan  
+3. Flowchart-piece puzzle (mid-project review)  
+4. Python convert / Pyodide run / step predict  
+5. Java convert / run / predict plus accounts  
+6. C convert / run / predict, dashboard, streaks (final review)
+
+This folder does not run a student program or keep accounts. That starts at installment 4.

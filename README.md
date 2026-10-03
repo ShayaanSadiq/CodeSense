@@ -1,3 +1,7 @@
+<p align="center">
+  <img src="prototype/frontend/public/logo.png" alt="CodeSense" width="280" />
+</p>
+
 # CodeSense
 
 Interactive tutor that turns a lab question into pseudocode the student builds decision by decision, then later runs their Python, Java, or C program and explains that run against the plan.
@@ -47,15 +51,11 @@ A theory, class-design, SQL, webpage, debugging, multi-procedure, or off-scope q
 
 ## Roadmap
 
-The prototype is its own deliverable. Ten installments follow. **Installment 5** is the mid-project review. **Installment 10** is the final review.
+The prototype is installment 1: Learning Space, graded Socratic decisions, Parsons, and **Spring AI** (Ollama by default, rules fallback if no model is up). **Installment 3** is the mid-project review. **Installment 6** is the final review.
 
-1. App shell — workshop in the real site; a session saves the question and the lines
-2. Python runner — paste a console program, dump a JSONL trace
-3. Playback — step through line, stack, and values. No model yet
-4. Java runner — same trace format from JDI
-5. Mid-project review — workshop, then Python and Java playback
-6. Narration — 1–3 sentences from the trace facts; reject invented values
-7. C runner — `gcc -g` and GDB; pointers as address plus one dereference
-8. Plan check — each step cites a pseudocode line; flag a plan line the run never did
-9. Why, cache, and a sandbox you can defend
-10. Final review — one question all the way through
+1. Workshop UI, Parsons, and bugfix — this folder
+2. Pseudocode translator — glossary, mark trigger words, assemble the plan
+3. Flowchart-piece puzzle — join boxes and diamonds
+4. Python — convert the plan, run it in the browser (Pyodide), predict each step
+5. Java track + accounts — same convert/run/predict, plus signup and saved progress
+6. C track + dashboard — C in the browser, performance matrix, per-language streaks
