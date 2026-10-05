@@ -9,6 +9,10 @@ public class Turn {
     private String question;
     private String answer;
     private List<PseudoLine> lines = new ArrayList<>();
+    private boolean revealed;
+    private boolean passed;
+    private String correctAnswer;
+    private String explanation;
 
     public Turn() {
     }
@@ -50,5 +54,37 @@ public class Turn {
 
     public void setLines(List<PseudoLine> lines) {
         this.lines = lines;
+    }
+
+    public boolean isRevealed() {
+        return revealed;
+    }
+
+    public void setRevealed(boolean revealed) {
+        this.revealed = revealed;
+    }
+
+    public boolean isPassed() {
+        return passed;
+    }
+
+    public void setPassed(boolean passed) {
+        this.passed = passed;
+    }
+
+    public String getCorrectAnswer() {
+        return correctAnswer;
+    }
+
+    public void setCorrectAnswer(String correctAnswer) {
+        this.correctAnswer = correctAnswer;
+    }
+
+    public String getExplanation() {
+        return explanation;
+    }
+
+    public void setExplanation(String explanation) {
+        this.explanation = explanation;
     }
 }

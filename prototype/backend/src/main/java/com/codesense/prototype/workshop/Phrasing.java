@@ -93,6 +93,34 @@ public final class Phrasing {
         return out;
     }
 
+    public static List<String> useConcreteNames(List<String> lines, String labQuestion) {
+        if (lines == null || lines.isEmpty()) {
+            return lines == null ? List.of() : lines;
+        }
+        String name = nameForLab(labQuestion);
+        if (name == null) {
+            return lines;
+        }
+        List<String> out = new ArrayList<>();
+        Pattern vague = Pattern.compile(
+                "\\b(?:the\\s+)?(?:remembered\\s+(?:name|value)|value so far)\\b",
+                Pattern.CASE_INSENSITIVE);
+        for (String line : lines) {
+            out.add(vague.matcher(line).replaceAll(name));
+        }
+        return out;
+    }
+
+    public static boolean hasVagueNames(List<String> lines) {
+        if (lines == null) {
+            return false;
+        }
+        Pattern vague = Pattern.compile(
+                "\\b(?:the\\s+)?(?:remembered\\s+(?:name|value)|value so far)\\b",
+                Pattern.CASE_INSENSITIVE);
+        return lines.stream().anyMatch(line -> vague.matcher(line).find());
+    }
+
     public static boolean usableForSlot(Slot slot, List<String> lines) {
         if (lines == null || lines.isEmpty()) {
             return false;
@@ -104,7 +132,7 @@ public final class Phrasing {
     }
 
     public static boolean usablePlan(List<String> lines) {
-        if (lines == null || lines.size() < 3) {
+        if (lines == null || lines.size() < 3 || hasVagueNames(lines)) {
             return false;
         }
         return hasVerb(lines, "INPUT") && hasVerb(lines, "OUTPUT");
@@ -251,6 +279,23 @@ public final class Phrasing {
             return "word";
         }
         return "item";
+    }
+
+    private static String nameForLab(String lab) {
+        String text = lab == null ? "" : lab;
+        if (find(text, "\\b(largest|biggest|maximum|max)\\b")) {
+            return "max";
+        }
+        if (find(text, "\\b(smallest|minimum|min)\\b")) {
+            return "min";
+        }
+        if (find(text, "vowel")) {
+            return "count";
+        }
+        if (find(text, "\\b(sum|total)\\b")) {
+            return "sum";
+        }
+        return null;
     }
 
     private static String rememberedName(String answer, String lab, List<String> priorLines) {

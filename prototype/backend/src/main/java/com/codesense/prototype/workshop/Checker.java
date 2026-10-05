@@ -24,6 +24,19 @@ public final class Checker {
     private static final Pattern SAYS_HOW = Pattern.compile(
             "\\b(first|start|starts|initial|zero|0|greater|less|update|change|if|when)\\b",
             Pattern.CASE_INSENSITIVE);
+    private static final Pattern YES_NO_START = Pattern.compile(
+            "^(do|does|did|is|are|was|were|can|could|should|would|will|have|has|had)\\b",
+            Pattern.CASE_INSENSITIVE);
+    private static final Pattern HOW_START = Pattern.compile("^how\\b", Pattern.CASE_INSENSITIVE);
+    private static final Pattern IO_IN = Pattern.compile(
+            "\\b(input|comes? in|given|receive|receives|data)\\b",
+            Pattern.CASE_INSENSITIVE);
+    private static final Pattern IO_OUT = Pattern.compile(
+            "\\b(output|comes? out|print|show|result|produce|give back)\\b",
+            Pattern.CASE_INSENSITIVE);
+    private static final Pattern IO_OFF_TOPIC = Pattern.compile(
+            "\\b(empty|only one|one element|compare|loop|walk|each item|algorithm|process|processes|find|finds|steps?|method|scan|go through)\\b",
+            Pattern.CASE_INSENSITIVE);
 
     private Checker() {
     }
@@ -53,18 +66,26 @@ public final class Checker {
         return asked.stream().anyMatch(previous -> sameQuestion(candidate, previous));
     }
 
+    public static boolean isYesNoQuestion(String question) {
+        String q = question == null ? "" : question.trim();
+        return !q.isEmpty() && YES_NO_START.matcher(q).find();
+    }
+
+    public static boolean isHowQuestion(String question) {
+        String q = question == null ? "" : question.trim();
+        return !q.isEmpty() && HOW_START.matcher(q).find();
+    }
+
     public static boolean staysOnSlot(Slot slot, String question) {
         String q = question == null ? "" : question.trim();
-        if (q.isEmpty() || questionLeaksStep(q)) {
+        if (q.isEmpty() || questionLeaksStep(q) || isYesNoQuestion(q) || isHowQuestion(q)) {
             return false;
         }
         if (slot == Slot.IO) {
-            if (Pattern.compile("\\b(empty|only one|one element|compare|loop|walk|each item|algorithm)\\b",
-                    Pattern.CASE_INSENSITIVE).matcher(q).find()) {
+            if (IO_OFF_TOPIC.matcher(q).find()) {
                 return false;
             }
-            return Pattern.compile("\\b(input|output|comes in|comes out|given|print|receive|show|value|result)\\b",
-                    Pattern.CASE_INSENSITIVE).matcher(q).find();
+            return IO_IN.matcher(q).find() && IO_OUT.matcher(q).find();
         }
         return true;
     }

@@ -23,4 +23,13 @@ class GraderTest {
                 .correct());
         assertFalse(Grader.fromRules(Slot.IO, "asdfasdf", "Smallest in a list").correct());
     }
+
+    @Test
+    void acceptsEverydayStrategyWording() {
+        assertTrue(Grader.fromRules(
+                        Slot.STRATEGY,
+                        "yes they check every number in the list to find the biggest one",
+                        "Find the largest number in a list.")
+                .correct());
+    }
 }

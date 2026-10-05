@@ -38,7 +38,9 @@ class WorkshopServiceTest {
         Session session = workshop.start("Find the largest number in a list.");
         assertEquals(Phase.ASK, session.getPhase());
         assertEquals(Slot.IO, session.getSlot());
-        assertEquals("What comes in, and what must come out?", session.getCurrentQuestion());
+        assertEquals(
+                "Name what data the program is given, and what one result it should give back.",
+                session.getCurrentQuestion());
     }
 
     @Test
@@ -57,6 +59,7 @@ class WorkshopServiceTest {
         WorkshopService workshop = new WorkshopService();
         Session started = workshop.start("Find the largest number in a list.");
         walk(workshop, started.getId(), "A list comes in. The biggest number comes out.");
+        assertTrue(workshop.get(started.getId()).getTurns().get(0).isPassed());
         walk(workshop, started.getId(), "Look at every number.");
         walk(workshop, started.getId(), "The biggest so far.");
         assertEquals(Slot.MEMORY, workshop.get(started.getId()).getSlot());
@@ -105,7 +108,8 @@ class WorkshopServiceTest {
         String firstQuestion = first.getCurrentQuestion();
         Session second = workshop.answer(started.getId(), "I don't know", false);
         assertTrue(firstQuestion.toLowerCase().contains("value given to the program"));
-        assertEquals("What data does the program receive?", second.getCurrentQuestion());
+        assertEquals("What data comes in, and what single value should it show when it finishes?",
+                second.getCurrentQuestion());
         assertFalse(firstQuestion.equals(second.getCurrentQuestion()));
     }
 
@@ -115,24 +119,25 @@ class WorkshopServiceTest {
         LlmCompleter completer = (system, user) -> {
             calls[0]++;
             if (calls[0] == 1) {
-                return "{\"question\":\"What value is given to the program?\"}";
+                return "{\"question\":\"What value is given to the program, and what should it print?\"}";
             }
-            return "{\"question\":\"What result should it show when it finishes?\"}";
+            return "{\"question\":\"What data comes in, and what result should it show when it finishes?\"}";
         };
         WorkshopService workshop = new WorkshopService(completer, LlmMode.OLLAMA);
         Session started = workshop.start("Smallest in a list");
         Session first = workshop.answer(started.getId(), "I don't know", false);
         String firstQuestion = first.getCurrentQuestion();
         Session second = workshop.answer(started.getId(), "I don't know", false);
-        assertEquals("What value is given to the program?", firstQuestion);
-        assertEquals("What result should it show when it finishes?", second.getCurrentQuestion());
+        assertEquals("What value is given to the program, and what should it print?", firstQuestion);
+        assertEquals("What data comes in, and what result should it show when it finishes?",
+                second.getCurrentQuestion());
     }
 
     @Test
     void usesModelForNarrowerQuestionAfterIo() {
         LlmCompleter completer = (system, user) -> {
             if (system.contains("narrower")) {
-                return "{\"question\":\"Do you walk every item or compute once?\"}";
+                return "{\"question\":\"Which do you use: walk every item or compute once?\"}";
             }
             return null;
         };
@@ -140,7 +145,7 @@ class WorkshopServiceTest {
         Session started = workshop.start("Find the largest number in a list.");
         walk(workshop, started.getId(), "A list comes in. The biggest number comes out.");
         Session after = workshop.answer(started.getId(), "I don't know", false);
-        assertEquals("Do you walk every item or compute once?", after.getCurrentQuestion());
+        assertEquals("Which do you use: walk every item or compute once?", after.getCurrentQuestion());
         assertTrue(after.getProposedLines().isEmpty());
         assertEquals(LlmMode.OLLAMA, after.getLlmMode());
     }
@@ -151,7 +156,7 @@ class WorkshopServiceTest {
         WorkshopService workshop = new WorkshopService(completer, LlmMode.OLLAMA);
         Session started = workshop.start("Smallest in a list");
         Session after = workshop.answer(started.getId(), "a list comes in, the smallest number comes out", false);
-        var texts = after.getProposedLines().stream().map(line -> line.getText()).toList();
+        var texts = after.getConfirmedLines().stream().map(line -> line.getText()).toList();
         assertTrue(texts.stream().anyMatch(text -> text.startsWith("INPUT")));
         assertTrue(texts.stream().anyMatch(text -> text.startsWith("OUTPUT")));
         assertFalse(texts.contains("RETURN"));
@@ -192,6 +197,69 @@ class WorkshopServiceTest {
     }
 
     @Test
+    void rewritesRememberedNameInTheModelPlan() {
+        LlmCompleter completer = (system, user) -> {
+            if (system.contains("complete short")) {
+                return """
+                        {"lines":[
+                          "INPUT a list of numbers",
+                          "OUTPUT the largest number",
+                          "SET the remembered name to the first number",
+                          "FOR each number in the list",
+                          "IF this number is larger than the remembered name, SET the remembered name to this number",
+                          "UNTIL there are no more items",
+                          "RETURN the largest number"
+                        ]}""";
+            }
+            return null;
+        };
+        WorkshopService workshop = new WorkshopService(completer, LlmMode.OLLAMA);
+        Session started = workshop.start("Find the largest number in a list.");
+        walk(workshop, started.getId(), "A list comes in. The biggest number comes out.");
+        walk(workshop, started.getId(), "Look at every number.");
+        walk(workshop, started.getId(), "The biggest so far. It starts as the first number.");
+        walk(workshop, started.getId(), "When the list ends, give back max.");
+        var texts = workshop.get(started.getId()).getConfirmedLines().stream()
+                .map(line -> line.getText())
+                .toList();
+        assertTrue(texts.stream().anyMatch(text -> text.contains("SET max")));
+        assertFalse(texts.stream().anyMatch(text -> text.toLowerCase().contains("remembered name")));
+    }
+
+    @Test
+    void arrangeSaysIndentWhenOnlyIndentIsWrong() {
+        WorkshopService workshop = new WorkshopService();
+        Session started = workshop.start("Find the largest number in a list.");
+        walk(workshop, started.getId(), "A list comes in. The biggest number comes out.");
+        walk(workshop, started.getId(), "Look at every number.");
+        walk(workshop, started.getId(), "The biggest so far. It starts as the first number. Update it when a larger number appears.");
+        walk(workshop, started.getId(), "When the list ends, give back max.");
+        Session puzzle = workshop.get(started.getId());
+        var flat = puzzle.getConfirmedLines().stream()
+                .map(line -> new com.codesense.prototype.model.PseudoLine(line.getId(), line.getText(), 0))
+                .toList();
+        Session checked = workshop.arrange(puzzle.getId(), flat);
+        assertEquals("wrong", checked.getVerdict());
+        assertTrue(checked.getFeedback().toLowerCase().contains("indent"));
+        assertTrue(checked.getFeedback().toLowerCase().contains("order is right"));
+    }
+
+    @Test
+    void arrangeAcceptsSetBeforeForWithIfIndented() {
+        WorkshopService workshop = new WorkshopService();
+        Session started = workshop.start("Find the largest number in a list.");
+        walk(workshop, started.getId(), "A list comes in. The biggest number comes out.");
+        walk(workshop, started.getId(), "Look at every number.");
+        walk(workshop, started.getId(), "The biggest so far. It starts as the first number.");
+        walk(workshop, started.getId(), "When the list ends, give back max.");
+        Session puzzle = workshop.get(started.getId());
+        Session checked = workshop.arrange(
+                puzzle.getId(), Parsons.withCanonicalIndent(puzzle.getConfirmedLines()));
+        assertEquals(Phase.DONE, checked.getPhase());
+        assertEquals("ok", checked.getVerdict());
+    }
+
+    @Test
     void dropsLeakedQuestion() {
         LlmCompleter completer = (system, user) -> {
             if (system.contains("Socratic")) {
@@ -201,10 +269,10 @@ class WorkshopServiceTest {
         };
         WorkshopService workshop = new WorkshopService(completer, LlmMode.OPENAI);
         Session started = workshop.start("Find the largest number in a list.");
-        workshop.answer(started.getId(), "A list comes in. The biggest number comes out.", false);
-        Session after = workshop.confirm(started.getId(), workshop.get(started.getId()).getProposedLines());
+        Session after = workshop.answer(
+                started.getId(), "A list comes in. The biggest number comes out.", false);
         assertEquals(
-                "Look at every item, search for one, split the problem, or compute once?",
+                "Which approach do you use: look at every item, search for one, split the problem, or compute once?",
                 after.getCurrentQuestion());
         assertTrue(after.isUsedFallbackQuestion());
     }
@@ -222,12 +290,70 @@ class WorkshopServiceTest {
         assertEquals("wrong", second.getVerdict());
         assertTrue(second.getFeedback().contains("1 try"));
         Session third = workshop.answer(started.getId(), "print hello", false);
-        assertEquals("revealed", third.getVerdict());
-        assertEquals(Phase.CONFIRM, third.getPhase());
-        assertTrue(third.getCorrectAnswer().toLowerCase().contains("largest"));
-        assertTrue(third.getExplanation().toLowerCase().contains("input"));
-        assertTrue(third.getProposedLines().stream().anyMatch(line -> line.getText().startsWith("INPUT")));
-        assertTrue(third.getProposedLines().stream().anyMatch(line -> line.getText().startsWith("OUTPUT")));
+        assertEquals(Phase.ASK, third.getPhase());
+        assertEquals(Slot.STRATEGY, third.getSlot());
+        assertFalse(third.getTurns().isEmpty());
+        var reveal = third.getTurns().get(third.getTurns().size() - 1);
+        assertEquals("print hello", reveal.getAnswer());
+        assertTrue(reveal.isRevealed());
+        assertFalse(reveal.isPassed());
+        assertTrue(reveal.getCorrectAnswer().toLowerCase().contains("largest"));
+        assertTrue(reveal.getExplanation().toLowerCase().contains("output"));
+        assertFalse(reveal.getExplanation().toLowerCase().contains("student"));
+        assertTrue(third.getConfirmedLines().stream().anyMatch(line -> line.getText().startsWith("INPUT")));
+        assertTrue(third.getConfirmedLines().stream().anyMatch(line -> line.getText().startsWith("OUTPUT")));
+    }
+
+    @Test
+    void rejectsAProcessQuestionOnTheIoSlot() {
+        LlmCompleter completer = (system, user) ->
+                "{\"question\":\"How does the program process the input list to find and output the maximum value?\"}";
+        WorkshopService workshop = new WorkshopService(completer, LlmMode.OLLAMA);
+        Session started = workshop.start("Find the largest number in a list.");
+        Session after = workshop.answer(started.getId(), "I don't know", false);
+        assertEquals(Slot.IO, after.getSlot());
+        assertFalse(after.getCurrentQuestion().toLowerCase().contains("process"));
+        assertTrue(after.getCurrentQuestion().toLowerCase().contains("given")
+                || after.getCurrentQuestion().toLowerCase().contains("print"));
+        assertTrue(after.isUsedFallbackQuestion());
+    }
+
+    @Test
+    void rejectsYesNoAndInputOnlyFollowUpQuestions() {
+        LlmCompleter completer = (system, user) -> {
+            if (system.contains("Socratic")) {
+                return "{\"question\":\"Do they check each number in the list one by one to find the biggest one?\"}";
+            }
+            return null;
+        };
+        WorkshopService workshop = new WorkshopService(completer, LlmMode.OLLAMA);
+        Session started = workshop.start("Find the largest number in a list.");
+        Session after = workshop.answer(
+                started.getId(), "A list comes in. The biggest number comes out.", false);
+        assertEquals(
+                "Which approach do you use: look at every item, search for one, split the problem, or compute once?",
+                after.getCurrentQuestion());
+        assertTrue(after.isUsedFallbackQuestion());
+    }
+
+    @Test
+    void keepsARuleCorrectStrategyAnswerWhenTheModelSaysWrong() {
+        LlmCompleter completer = (system, user) -> {
+            if (system.contains("Grade whether")) {
+                return "{\"correct\":false,\"expected\":\"Look at every item.\",\"explanation\":\"The walk visits every number.\"}";
+            }
+            return null;
+        };
+        WorkshopService workshop = new WorkshopService(completer, LlmMode.OLLAMA);
+        Session started = workshop.start("Find the largest number in a list.");
+        walk(workshop, started.getId(), "A list comes in. The biggest number comes out.");
+        Session after = workshop.answer(
+                started.getId(),
+                "yes they check every number in the list to find the biggest one",
+                false);
+        assertEquals(Phase.ASK, after.getPhase());
+        assertEquals(Slot.MEMORY, after.getSlot());
+        assertFalse("wrong".equals(after.getVerdict()));
     }
 
     @Test
@@ -242,6 +368,5 @@ class WorkshopServiceTest {
 
     private static void walk(WorkshopService workshop, String id, String answer) {
         workshop.answer(id, answer, false);
-        workshop.confirm(id, workshop.get(id).getProposedLines());
     }
 }

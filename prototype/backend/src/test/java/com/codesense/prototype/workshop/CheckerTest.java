@@ -20,17 +20,37 @@ class CheckerTest {
     @Test
     void allowsADecisionQuestion() {
         assertFalse(Checker.questionLeaksStep("What do you remember between steps?"));
-        assertFalse(Checker.questionLeaksStep("Do you look at every item, or stop when you find one?"));
+        assertFalse(Checker.questionLeaksStep("Which do you do: look at every item, or stop when you find one?"));
+    }
+
+    @Test
+    void rejectsYesNoQuestions() {
+        assertTrue(Checker.isYesNoQuestion("Do they check each number in the list one by one to find the biggest one?"));
+        assertTrue(Checker.isYesNoQuestion("Is this a walk through everything?"));
+        assertFalse(Checker.isYesNoQuestion("Which approach do you use: look at every item, or compute once?"));
+        assertFalse(Checker.staysOnSlot(
+                com.codesense.prototype.model.Slot.STRATEGY,
+                "Do they check each number in the list one by one to find the biggest one?"));
     }
 
     @Test
     void ioQuestionMustStayOnInputAndOutput() {
-        assertTrue(Checker.staysOnSlot(com.codesense.prototype.model.Slot.IO, "What value is given to the program?"));
+        assertTrue(Checker.staysOnSlot(
+                com.codesense.prototype.model.Slot.IO,
+                "Name what data the program is given, and what one result it should give back."));
+        assertTrue(Checker.staysOnSlot(
+                com.codesense.prototype.model.Slot.IO, "What comes in, and what must come out?"));
+        assertFalse(Checker.staysOnSlot(com.codesense.prototype.model.Slot.IO, "What value is given to the program?"));
+        assertFalse(Checker.staysOnSlot(com.codesense.prototype.model.Slot.IO, "What data does the program receive?"));
+        assertFalse(Checker.staysOnSlot(
+                com.codesense.prototype.model.Slot.IO,
+                "How does the program process the input list to find and output the maximum value?"));
         assertFalse(Checker.staysOnSlot(
                 com.codesense.prototype.model.Slot.IO,
                 "What should the function return if the list has one element?"));
         assertTrue(Checker.alreadyAsked("What comes in, and what must come out?", List.of("What comes in, and what must come out?")));
-        assertFalse(Checker.alreadyAsked("What data does the program receive?", List.of("What comes in, and what must come out?")));
+        assertFalse(Checker.alreadyAsked("What data comes in, and what single value should it show when it finishes?",
+                List.of("What comes in, and what must come out?")));
     }
 
     @Test

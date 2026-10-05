@@ -131,7 +131,8 @@ public class WorkshopService {
             session.setExplanation(grade.explanation());
             session.setFeedback("That answer is still wrong. Here is the correct answer.");
             proposeLines(session, grade.expected());
-            return keep(session);
+            attachReveal(session, answer, grade);
+            return confirm(id, session.getProposedLines());
         }
         session.setWrongAttempts(0);
         session.setVerdict("ok");
@@ -139,7 +140,8 @@ public class WorkshopService {
         session.setExplanation(null);
         session.setCorrectAnswer(null);
         proposeLines(session, answer);
-        return keep(session);
+        markLastTurnCorrect(session);
+        return confirm(id, session.getProposedLines());
     }
 
     private void proposeLines(Session session, String answer) {
@@ -151,6 +153,32 @@ public class WorkshopService {
         session.setProposedLines(proposed);
         session.setPhase(Phase.CONFIRM);
         session.getTurns().add(new Turn(session.getSlot(), session.getCurrentQuestion(), answer, proposed));
+    }
+
+    private static void markLastTurnCorrect(Session session) {
+        if (session.getTurns().isEmpty()) {
+            return;
+        }
+        Turn last = session.getTurns().get(session.getTurns().size() - 1);
+        last.setPassed(true);
+        last.setRevealed(false);
+    }
+
+    private static void attachReveal(Session session, String studentAnswer, Grader.Grade grade) {
+        if (session.getTurns().isEmpty()) {
+            return;
+        }
+        Turn last = session.getTurns().get(session.getTurns().size() - 1);
+        last.setAnswer(studentAnswer);
+        last.setPassed(false);
+        last.setRevealed(true);
+        Grader.Grade rules = Grader.fromRules(session.getSlot(), studentAnswer, session.getLabQuestion());
+        String expected = grade.expected();
+        if (expected == null || expected.isBlank()) {
+            expected = rules.expected();
+        }
+        last.setCorrectAnswer(expected);
+        last.setExplanation(rules.explanation());
     }
 
     public synchronized Session confirm(String id, List<PseudoLine> lines) {
@@ -237,14 +265,20 @@ public class WorkshopService {
                 ordered.add(new PseudoLine(known.getId(), known.getText(), indent));
             }
         }
-        if (ordered.size() != session.getConfirmedLines().size()
-                || !Parsons.isPermutation(session.getConfirmedLines(), ordered)) {
+        List<PseudoLine> expected = Parsons.withCanonicalIndent(session.getConfirmedLines());
+        if (ordered.size() != expected.size() || !Parsons.isPermutation(expected, ordered)) {
             return session;
         }
         session.setPuzzleLines(ordered);
-        if (!Parsons.matches(session.getConfirmedLines(), ordered)) {
+        if (!Parsons.matches(expected, ordered)) {
             session.setVerdict("wrong");
-            session.setFeedback("That order isn't right yet. Move the lines and indent the body of each FOR or IF.");
+            if (Parsons.orderMatches(expected, ordered)) {
+                session.setFeedback(
+                        "The line order is right. Indent only the line under each FOR (the IF). Leave UNTIL at the left.");
+            } else {
+                session.setFeedback(
+                        "Start with INPUT and OUTPUT, then SET the first value, then FOR, then IF, then UNTIL, then RETURN.");
+            }
             return keep(session);
         }
         session.setConfirmedLines(ordered);
@@ -298,6 +332,9 @@ public class WorkshopService {
         Grader.Grade parsed = LlmJson.parseGrade(raw);
         if (parsed != null) {
             session.setLlmMode(reportedMode);
+            if (fallback.correct() && !parsed.correct()) {
+                return fallback;
+            }
             return parsed.withFallback(fallback);
         }
         return fallback;
@@ -361,8 +398,9 @@ public class WorkshopService {
                         + "\n\nEarlier decisions:\n" + history
                         + "\n\nCurrent question:\n" + session.getCurrentQuestion()
                         + "\n\nStudent answer:\n" + answer);
-        List<String> parsed = Phrasing.sanitizeLines(LlmJson.parseLines(raw));
-        if (Phrasing.usableForSlot(session.getSlot(), parsed)) {
+        List<String> parsed = Phrasing.useConcreteNames(
+                Phrasing.sanitizeLines(LlmJson.parseLines(raw)), session.getLabQuestion());
+        if (Phrasing.usableForSlot(session.getSlot(), parsed) && !Phrasing.hasVagueNames(parsed)) {
             session.setLlmMode(reportedMode);
             return parsed;
         }
@@ -372,7 +410,7 @@ public class WorkshopService {
     }
 
     private void preparePuzzle(Session session) {
-        Parsons.applyIndent(session.getConfirmedLines());
+        session.setConfirmedLines(Parsons.withCanonicalIndent(session.getConfirmedLines()));
         session.setPuzzleLines(Parsons.shuffle(session.getConfirmedLines()));
     }
 
@@ -390,7 +428,8 @@ public class WorkshopService {
                 "Lab question:\n" + session.getLabQuestion()
                         + "\n\nDecisions:\n" + history
                         + "\n\nDraft lines so far:\n" + soFar);
-        List<String> generated = Phrasing.sanitizeLines(LlmJson.parseLines(raw));
+        List<String> generated = Phrasing.useConcreteNames(
+                Phrasing.sanitizeLines(LlmJson.parseLines(raw)), session.getLabQuestion());
         if (Phrasing.usablePlan(generated)) {
             List<PseudoLine> lines = new ArrayList<>();
             for (int i = 0; i < generated.size(); i++) {
@@ -439,7 +478,7 @@ public class WorkshopService {
                         + "\n\nDecisions so far:\n" + history
                         + "\n\nAsk about the " + session.getSlot().value() + " decision next.");
         String question = LlmJson.parseQuestion(raw);
-        if (question != null && !Checker.questionLeaksStep(question)) {
+        if (question != null && Checker.staysOnSlot(session.getSlot(), question)) {
             session.setLlmMode(reportedMode);
             return question;
         }

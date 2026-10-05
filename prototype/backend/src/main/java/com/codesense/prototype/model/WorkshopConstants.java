@@ -15,15 +15,15 @@ public final class WorkshopConstants {
             "CodeSense will not help with that request.";
 
     public static final Map<Slot, String> FIXED_QUESTIONS = Map.of(
-            Slot.IO, "What comes in, and what must come out?",
-            Slot.STRATEGY, "Look at every item, search for one, split the problem, or compute once?",
+            Slot.IO, "Name what data the program is given, and what one result it should give back.",
+            Slot.STRATEGY, "Which approach do you use: look at every item, search for one, split the problem, or compute once?",
             Slot.MEMORY, "What do you remember between steps?",
             Slot.STOP, "When do you stop, and what do you give back?");
 
     public static final Map<Slot, String> NARROW_QUESTIONS = Map.of(
             Slot.IO, "Name the value given to the program, then the value it should print.",
             Slot.STRATEGY,
-            "Do you walk through every item, stop when you find one, divide the work, or just compute once?",
+            "Which of these is the work: walk through every item, stop when you find one, divide the work, or just compute once?",
             Slot.MEMORY, "What number or word do you keep as you go, and where does it start?",
             Slot.STOP, "After the last item, what do you give back?");
 
@@ -31,14 +31,13 @@ public final class WorkshopConstants {
             Slot.IO,
             List.of(
                     NARROW_QUESTIONS.get(Slot.IO),
-                    "What data does the program receive?",
-                    "When it finishes, what single value should it show?",
+                    "What data comes in, and what single value should it show when it finishes?",
                     "Say the input in a few words, then the output in a few words."),
             Slot.STRATEGY,
             List.of(
                     NARROW_QUESTIONS.get(Slot.STRATEGY),
-                    "Do you look at every item, or only until you find one?",
-                    "Is this a walk through everything, a search, a split, or one calculation?"),
+                    "Which do you do: look at every item, or only until you find one?",
+                    "Which is this: a walk through everything, a search, a split, or one calculation?"),
             Slot.MEMORY,
             List.of(
                     NARROW_QUESTIONS.get(Slot.MEMORY),

@@ -71,7 +71,7 @@ public final class Grader {
                     "Nothing repeats: two numbers go in and one multiplication produces the area, so there is no loop.");
         }
         return new Grade(
-                has(answer, "\\b(every|each|all|walk|scan|go through|look at)\\b"),
+                has(answer, "\\b(every|each|all|walk|scan|go through|look at|check)\\b"),
                 "Look at every item in the input.",
                 "The result depends on every value, so the procedure walks the whole input rather than stopping at the first item or computing once.");
     }

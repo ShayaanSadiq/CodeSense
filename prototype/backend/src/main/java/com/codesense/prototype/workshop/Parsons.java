@@ -3,6 +3,7 @@ package com.codesense.prototype.workshop;
 import com.codesense.prototype.model.PseudoLine;
 import java.util.ArrayList;
 import java.util.Collections;
+import java.util.Comparator;
 import java.util.List;
 import java.util.Objects;
 import java.util.Random;
@@ -23,7 +24,7 @@ public final class Parsons {
                 indent = 0;
             }
             line.setIndent(Math.max(0, indent));
-            if ("FOR".equals(verb) || "WHILE".equals(verb) || "IF".equals(verb)) {
+            if ("FOR".equals(verb) || "WHILE".equals(verb)) {
                 indent++;
             }
         }
@@ -42,6 +43,28 @@ public final class Parsons {
             Collections.swap(puzzle, 0, 1);
         }
         return puzzle;
+    }
+
+    public static List<PseudoLine> canonicalOrder(List<PseudoLine> lines) {
+        if (lines == null || lines.isEmpty()) {
+            return List.of();
+        }
+        List<PseudoLine> ordered = new ArrayList<>(lines);
+        ordered.sort(Comparator.comparingInt(line -> rank(verb(line.getText()))));
+        return ordered;
+    }
+
+    public static List<PseudoLine> withCanonicalIndent(List<PseudoLine> lines) {
+        List<PseudoLine> ordered = new ArrayList<>();
+        for (PseudoLine line : canonicalOrder(lines)) {
+            ordered.add(new PseudoLine(line.getId(), line.getText(), 0));
+        }
+        applyIndent(ordered);
+        return ordered;
+    }
+
+    public static boolean orderMatches(List<PseudoLine> solution, List<PseudoLine> attempt) {
+        return sameOrder(solution, attempt);
     }
 
     public static boolean matches(List<PseudoLine> solution, List<PseudoLine> attempt) {
@@ -88,6 +111,20 @@ public final class Parsons {
             }
         }
         return true;
+    }
+
+    private static int rank(String verb) {
+        return switch (verb) {
+            case "INPUT" -> 0;
+            case "OUTPUT" -> 1;
+            case "SET" -> 2;
+            case "FOR", "WHILE" -> 3;
+            case "SEARCH", "SPLIT", "COMPUTE" -> 4;
+            case "IF" -> 5;
+            case "UNTIL" -> 6;
+            case "RETURN" -> 7;
+            default -> 4;
+        };
     }
 
     private static String verb(String text) {

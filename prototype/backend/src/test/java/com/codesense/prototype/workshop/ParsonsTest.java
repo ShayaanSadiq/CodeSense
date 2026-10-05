@@ -29,6 +29,43 @@ class ParsonsTest {
     }
 
     @Test
+    void scoresInitBeforeTheLoopAsCorrect() {
+        List<PseudoLine> interviewOrder = List.of(
+                new PseudoLine("1", "INPUT a list", 0),
+                new PseudoLine("2", "OUTPUT the largest number", 0),
+                new PseudoLine("3", "FOR each number in the list", 0),
+                new PseudoLine("4", "SET max to the first number", 0),
+                new PseudoLine("5", "IF this number is greater than max, SET max to this number", 0),
+                new PseudoLine("6", "UNTIL there are no more items", 0),
+                new PseudoLine("7", "RETURN max", 0));
+        List<PseudoLine> expected = Parsons.withCanonicalIndent(interviewOrder);
+        assertEquals("SET max to the first number", expected.get(2).getText());
+        assertEquals("FOR each number in the list", expected.get(3).getText());
+        assertEquals(1, expected.get(4).getIndent());
+        List<PseudoLine> student = List.of(
+                new PseudoLine("1", "INPUT a list", 0),
+                new PseudoLine("2", "OUTPUT the largest number", 0),
+                new PseudoLine("4", "SET max to the first number", 0),
+                new PseudoLine("3", "FOR each number in the list", 0),
+                new PseudoLine("5", "IF this number is greater than max, SET max to this number", 1),
+                new PseudoLine("6", "UNTIL there are no more items", 0),
+                new PseudoLine("7", "RETURN max", 0));
+        assertTrue(Parsons.matches(expected, student));
+    }
+
+    @Test
+    void orderCanMatchWhenIndentDoesNot() {
+        List<PseudoLine> solution = List.of(
+                new PseudoLine("1", "FOR each number", 0),
+                new PseudoLine("2", "IF this number is greater than max, SET max to this number", 1));
+        List<PseudoLine> flat = List.of(
+                new PseudoLine("1", "FOR each number", 0),
+                new PseudoLine("2", "IF this number is greater than max, SET max to this number", 0));
+        assertTrue(Parsons.orderMatches(solution, flat));
+        assertFalse(Parsons.matches(solution, flat));
+    }
+
+    @Test
     void shuffleChangesOrderAndClearsIndent() {
         List<PseudoLine> solution = List.of(
                 new PseudoLine("1", "INPUT a list", 0),

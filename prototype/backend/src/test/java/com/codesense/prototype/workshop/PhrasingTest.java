@@ -1,6 +1,8 @@
 package com.codesense.prototype.workshop;
 
 import static org.junit.jupiter.api.Assertions.assertEquals;
+import static org.junit.jupiter.api.Assertions.assertFalse;
+import static org.junit.jupiter.api.Assertions.assertTrue;
 
 import com.codesense.prototype.model.Slot;
 import java.util.List;
@@ -61,6 +63,24 @@ class PhrasingTest {
                         "UNTIL",
                         "IF list has more THEN FOR each item COMPUTE compare",
                         "SET the value so far to the value so far")));
+    }
+
+    @Test
+    void rewritesRememberedNameToMax() {
+        assertEquals(
+                List.of(
+                        "SET max to the first number",
+                        "IF this number is larger than max, SET max to this number"),
+                Phrasing.useConcreteNames(
+                        List.of(
+                                "SET the remembered name to the first number",
+                                "IF this number is larger than the remembered name, SET the remembered name to this number"),
+                        "Find the largest number in a list."));
+        assertTrue(Phrasing.hasVagueNames(List.of("SET the remembered name to the first number")));
+        assertFalse(Phrasing.usablePlan(List.of(
+                "INPUT a list",
+                "OUTPUT the largest number",
+                "SET the remembered name to the first number")));
     }
 
     @Test
