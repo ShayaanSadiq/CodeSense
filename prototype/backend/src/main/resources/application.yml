@@ -6,6 +6,21 @@ spring:
     name: codesense-prototype-api
   jackson:
     default-property-inclusion: non_null
+  ai:
+    model:
+      chat: none
+      embedding: none
+      image: none
+      moderation: none
+      audio:
+        speech: none
+        transcription: none
+    ollama:
+      base-url: ${OLLAMA_BASE_URL:http://127.0.0.1:11434}
+      chat:
+        options:
+          model: ${OLLAMA_MODEL:qwen3:8b}
+          temperature: 0.2
 
 codesense:
   data-dir: ${CODESENSE_DATA:data}

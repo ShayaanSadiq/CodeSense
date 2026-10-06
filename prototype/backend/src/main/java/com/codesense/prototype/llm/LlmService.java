@@ -3,16 +3,13 @@ package com.codesense.prototype.llm;
 import com.codesense.prototype.config.CodeSenseProperties;
 import com.codesense.prototype.model.LlmMode;
 import com.codesense.prototype.model.LlmProvider;
+import org.springframework.ai.chat.client.ChatClient;
 import tools.jackson.databind.JsonNode;
 import tools.jackson.databind.ObjectMapper;
-import tools.jackson.databind.node.ArrayNode;
-import tools.jackson.databind.node.ObjectNode;
 import java.net.URI;
-import java.net.URLEncoder;
 import java.net.http.HttpClient;
 import java.net.http.HttpRequest;
 import java.net.http.HttpResponse;
-import java.nio.charset.StandardCharsets;
 import java.nio.file.Files;
 import java.nio.file.Path;
 import java.time.Duration;
@@ -38,6 +35,7 @@ public class LlmService implements LlmCompleter {
     private String completeUrl;
     private String apiKey;
     private String ollamaRoot;
+    private ChatClient chatClient;
     private List<String> models = List.of();
 
     public LlmService(CodeSenseProperties properties, ObjectMapper mapper) {
@@ -82,16 +80,10 @@ public class LlmService implements LlmCompleter {
 
     @Override
     public synchronized String complete(String system, String user) {
-        if (!ready) {
+        if (!ready || chatClient == null) {
             return null;
         }
-        if (provider == LlmProvider.OLLAMA) {
-            return ollamaChat(system, user);
-        }
-        if (provider == LlmProvider.GEMINI) {
-            return geminiGenerate(system, user);
-        }
-        return chatCompletions(system, user, Duration.ofSeconds(20));
+        return LlmChat.complete(chatClient, system, user);
     }
 
     private Resolved resolve() {
@@ -154,6 +146,13 @@ public class LlmService implements LlmCompleter {
         this.completeUrl = resolved.url;
         this.apiKey = resolved.apiKey;
         this.ollamaRoot = resolved.ollamaRoot;
+        this.chatClient = resolved.ready
+                ? LlmChat.client(resolved.provider, resolved.model, resolved.url, resolved.apiKey, resolved.ollamaRoot)
+                : null;
+        if (resolved.ready && this.chatClient == null) {
+            this.ready = false;
+            this.error = "Spring AI could not build a ChatClient for " + resolved.provider.value() + ".";
+        }
     }
 
     private Resolved cloud(LlmMode mode, LlmProvider provider, String model, String baseUrl, String key) {
@@ -167,93 +166,6 @@ public class LlmService implements LlmCompleter {
 
     private Resolved rules(String message) {
         return new Resolved(LlmMode.RULES, LlmProvider.RULES, "", false, message, null, null, ollamaRoot());
-    }
-
-    private String ollamaChat(String system, String user) {
-        try {
-            ObjectNode body = mapper.createObjectNode();
-            body.put("model", model);
-            body.put("stream", false);
-            body.put("format", "json");
-            body.put("think", false);
-            ArrayNode messages = body.putArray("messages");
-            messages.add(mapper.createObjectNode().put("role", "system").put("content", system));
-            messages.add(mapper.createObjectNode().put("role", "user").put("content", user));
-            body.putObject("options").put("temperature", 0.2);
-            HttpRequest request = HttpRequest.newBuilder()
-                    .uri(URI.create(ollamaRoot.replaceAll("/$", "") + "/api/chat"))
-                    .timeout(Duration.ofSeconds(90))
-                    .header("Content-Type", "application/json")
-                    .POST(HttpRequest.BodyPublishers.ofString(mapper.writeValueAsString(body)))
-                    .build();
-            HttpResponse<String> response = http.send(request, HttpResponse.BodyHandlers.ofString());
-            if (response.statusCode() / 100 != 2) {
-                return null;
-            }
-            JsonNode json = mapper.readTree(response.body());
-            JsonNode content = json.path("message").path("content");
-            return content.isTextual() ? LlmJson.stripThink(content.asText()) : null;
-        } catch (Exception ignored) {
-            return null;
-        }
-    }
-
-    private String chatCompletions(String system, String user, Duration timeout) {
-        try {
-            ObjectNode body = mapper.createObjectNode();
-            body.put("model", model);
-            body.put("temperature", 0.2);
-            ArrayNode messages = body.putArray("messages");
-            messages.add(mapper.createObjectNode().put("role", "system").put("content", system));
-            messages.add(mapper.createObjectNode().put("role", "user").put("content", user));
-            HttpRequest request = HttpRequest.newBuilder()
-                    .uri(URI.create(completeUrl))
-                    .timeout(timeout)
-                    .header("Content-Type", "application/json")
-                    .header("Authorization", "Bearer " + apiKey)
-                    .POST(HttpRequest.BodyPublishers.ofString(mapper.writeValueAsString(body)))
-                    .build();
-            HttpResponse<String> response = http.send(request, HttpResponse.BodyHandlers.ofString());
-            if (response.statusCode() / 100 != 2) {
-                return null;
-            }
-            JsonNode json = mapper.readTree(response.body());
-            JsonNode content = json.path("choices").path(0).path("message").path("content");
-            return content.isTextual() ? LlmJson.stripThink(content.asText()) : null;
-        } catch (Exception ignored) {
-            return null;
-        }
-    }
-
-    private String geminiGenerate(String system, String user) {
-        try {
-            String url = "https://generativelanguage.googleapis.com/v1beta/models/"
-                    + URLEncoder.encode(model, StandardCharsets.UTF_8)
-                    + ":generateContent?key="
-                    + URLEncoder.encode(apiKey, StandardCharsets.UTF_8);
-            ObjectNode body = mapper.createObjectNode();
-            body.putObject("systemInstruction").putArray("parts").add(mapper.createObjectNode().put("text", system));
-            body.putArray("contents").add(mapper.createObjectNode()
-                    .put("role", "user")
-                    .putArray("parts")
-                    .add(mapper.createObjectNode().put("text", user)));
-            body.putObject("generationConfig").put("temperature", 0.2).put("responseMimeType", "application/json");
-            HttpRequest request = HttpRequest.newBuilder()
-                    .uri(URI.create(url))
-                    .timeout(Duration.ofSeconds(20))
-                    .header("Content-Type", "application/json")
-                    .POST(HttpRequest.BodyPublishers.ofString(mapper.writeValueAsString(body)))
-                    .build();
-            HttpResponse<String> response = http.send(request, HttpResponse.BodyHandlers.ofString());
-            if (response.statusCode() / 100 != 2) {
-                return null;
-            }
-            JsonNode json = mapper.readTree(response.body());
-            JsonNode content = json.path("candidates").path(0).path("content").path("parts").path(0).path("text");
-            return content.isTextual() ? LlmJson.stripThink(content.asText()) : null;
-        } catch (Exception ignored) {
-            return null;
-        }
     }
 
     private List<String> listOllamaModels(String root) {
