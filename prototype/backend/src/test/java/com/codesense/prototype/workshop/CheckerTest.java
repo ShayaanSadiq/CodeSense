@@ -34,23 +34,24 @@ class CheckerTest {
     }
 
     @Test
-    void ioQuestionMustStayOnInputAndOutput() {
+    void inputQuestionMustStayOnInputOnly() {
         assertTrue(Checker.staysOnSlot(
-                com.codesense.prototype.model.Slot.IO,
-                "Name what data the program is given, and what one result it should give back."));
+                com.codesense.prototype.model.Slot.INPUT,
+                "Name what data the program is given."));
         assertTrue(Checker.staysOnSlot(
-                com.codesense.prototype.model.Slot.IO, "What comes in, and what must come out?"));
-        assertFalse(Checker.staysOnSlot(com.codesense.prototype.model.Slot.IO, "What value is given to the program?"));
-        assertFalse(Checker.staysOnSlot(com.codesense.prototype.model.Slot.IO, "What data does the program receive?"));
+                com.codesense.prototype.model.Slot.INPUT, "What data does the program receive?"));
         assertFalse(Checker.staysOnSlot(
-                com.codesense.prototype.model.Slot.IO,
+                com.codesense.prototype.model.Slot.INPUT, "What comes in, and what must come out?"));
+        assertFalse(Checker.staysOnSlot(
+                com.codesense.prototype.model.Slot.INPUT,
                 "How does the program process the input list to find and output the maximum value?"));
+        assertTrue(Checker.staysOnSlot(
+                com.codesense.prototype.model.Slot.OUTPUT, "What one result should it give back?"));
         assertFalse(Checker.staysOnSlot(
-                com.codesense.prototype.model.Slot.IO,
+                com.codesense.prototype.model.Slot.OUTPUT,
                 "What should the function return if the list has one element?"));
-        assertTrue(Checker.alreadyAsked("What comes in, and what must come out?", List.of("What comes in, and what must come out?")));
-        assertFalse(Checker.alreadyAsked("What data comes in, and what single value should it show when it finishes?",
-                List.of("What comes in, and what must come out?")));
+        assertTrue(Checker.alreadyAsked("What data comes in?", List.of("What data comes in?")));
+        assertFalse(Checker.alreadyAsked("What data comes in?", List.of("Name the value given to the program.")));
     }
 
     @Test

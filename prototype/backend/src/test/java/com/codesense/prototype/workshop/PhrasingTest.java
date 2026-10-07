@@ -11,12 +11,19 @@ import org.junit.jupiter.api.Test;
 class PhrasingTest {
 
     @Test
-    void turnsIoAnswerIntoInputAndOutput() {
+    void turnsInputAndOutputAnswersIntoSeparateLines() {
         assertEquals(
-                List.of("INPUT a list", "OUTPUT the biggest number"),
+                List.of("INPUT a list"),
                 Phrasing.phraseFromRules(
-                        Slot.IO,
-                        "A list comes in. The biggest number comes out.",
+                        Slot.INPUT,
+                        "A list comes in.",
+                        "Find the largest number in a list.",
+                        List.of()));
+        assertEquals(
+                List.of("OUTPUT the biggest number"),
+                Phrasing.phraseFromRules(
+                        Slot.OUTPUT,
+                        "The biggest number comes out.",
                         "Find the largest number in a list.",
                         List.of()));
     }

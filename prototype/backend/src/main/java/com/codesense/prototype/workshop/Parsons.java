@@ -20,7 +20,7 @@ public final class Parsons {
         int indent = 0;
         for (PseudoLine line : lines) {
             String verb = verb(line.getText());
-            if ("UNTIL".equals(verb) || "RETURN".equals(verb) || "ELSE".equals(verb)) {
+            if ("UNTIL".equals(verb) || "RETURN".equals(verb) || "ELSE".equals(verb) || "OUTPUT".equals(verb)) {
                 indent = 0;
             }
             line.setIndent(Math.max(0, indent));
@@ -116,14 +116,14 @@ public final class Parsons {
     private static int rank(String verb) {
         return switch (verb) {
             case "INPUT" -> 0;
-            case "OUTPUT" -> 1;
-            case "SET" -> 2;
-            case "FOR", "WHILE" -> 3;
-            case "SEARCH", "SPLIT", "COMPUTE" -> 4;
-            case "IF" -> 5;
-            case "UNTIL" -> 6;
-            case "RETURN" -> 7;
-            default -> 4;
+            case "SET" -> 1;
+            case "FOR", "WHILE" -> 2;
+            case "SEARCH", "SPLIT", "COMPUTE" -> 3;
+            case "IF" -> 4;
+            case "UNTIL" -> 5;
+            case "RETURN" -> 6;
+            case "OUTPUT" -> 7;
+            default -> 3;
         };
     }
 

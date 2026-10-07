@@ -71,7 +71,7 @@ public class WorkshopService {
         Session session = new Session();
         session.setId(id);
         session.setLabQuestion(question);
-        session.setSlot(Slot.IO);
+        session.setSlot(Slot.INPUT);
         session.setProposedLines(new ArrayList<>());
         session.setConfirmedLines(new ArrayList<>());
         session.setPuzzleLines(new ArrayList<>());
@@ -94,7 +94,7 @@ public class WorkshopService {
             return session;
         }
         session.setPhase(Phase.ASK);
-        session.setCurrentQuestion(WorkshopConstants.FIXED_QUESTIONS.get(Slot.IO));
+        session.setCurrentQuestion(WorkshopConstants.FIXED_QUESTIONS.get(Slot.INPUT));
         sessions.put(id, session);
         return keep(session);
     }
@@ -277,7 +277,7 @@ public class WorkshopService {
                         "The line order is right. Indent only the line under each FOR (the IF). Leave UNTIL at the left.");
             } else {
                 session.setFeedback(
-                        "Start with INPUT and OUTPUT, then SET the first value, then FOR, then IF, then UNTIL, then RETURN.");
+                        "Start with INPUT, then SET, then FOR, then IF, then UNTIL, then RETURN. Put OUTPUT last.");
             }
             return keep(session);
         }
@@ -310,14 +310,17 @@ public class WorkshopService {
     }
 
     private Slot nextSlotAfter(Slot slot, Boolean hasRepetition) {
-        if (slot == Slot.IO) {
+        if (slot == Slot.INPUT) {
             return Slot.STRATEGY;
         }
         if (slot == Slot.STRATEGY) {
-            return Boolean.FALSE.equals(hasRepetition) ? null : Slot.MEMORY;
+            return Boolean.FALSE.equals(hasRepetition) ? Slot.OUTPUT : Slot.MEMORY;
         }
         if (slot == Slot.MEMORY) {
             return Slot.STOP;
+        }
+        if (slot == Slot.STOP) {
+            return Slot.OUTPUT;
         }
         return null;
     }
@@ -449,22 +452,28 @@ public class WorkshopService {
         if (hasInput && hasOutput) {
             return;
         }
-        String ioAnswer = session.getTurns().stream()
-                .filter(turn -> turn.getSlot() == Slot.IO)
-                .map(Turn::getAnswer)
-                .findFirst()
-                .orElse("");
-        List<String> io = Phrasing.phraseFromRules(Slot.IO, ioAnswer, session.getLabQuestion(), List.of());
-        List<PseudoLine> repaired = new ArrayList<>();
+        String inputAnswer = answerFor(session, Slot.INPUT);
+        String outputAnswer = answerFor(session, Slot.OUTPUT);
+        List<PseudoLine> lines = new ArrayList<>(session.getConfirmedLines());
         int extra = 0;
         if (!hasInput) {
-            repaired.add(new PseudoLine(nextLineId(session, extra++), io.get(0), 0));
+            List<String> input = Phrasing.phraseFromRules(Slot.INPUT, inputAnswer, session.getLabQuestion(), List.of());
+            lines.add(0, new PseudoLine(nextLineId(session, extra++), input.get(0), 0));
         }
         if (!hasOutput) {
-            repaired.add(new PseudoLine(nextLineId(session, extra), io.get(1), 0));
+            List<String> output = Phrasing.phraseFromRules(Slot.OUTPUT, outputAnswer, session.getLabQuestion(), List.of());
+            lines.add(new PseudoLine(nextLineId(session, extra), output.get(0), 0));
         }
-        repaired.addAll(session.getConfirmedLines());
-        session.setConfirmedLines(repaired);
+        session.setConfirmedLines(lines);
+    }
+
+    private static String answerFor(Session session, Slot slot) {
+        return session.getTurns().stream()
+                .filter(turn -> turn.getSlot() == slot)
+                .map(Turn::getAnswer)
+                .filter(answer -> answer != null && !answer.isBlank())
+                .findFirst()
+                .orElse("");
     }
 
     private String nextQuestion(Session session) {

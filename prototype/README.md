@@ -42,14 +42,15 @@ Same URLs. The UI is served on port 43124.
 ## What to demo
 
 1. Paste `Find the largest number in a list.`
-2. Answer: a list comes in, the biggest number comes out → confirm the lines.
+2. Input first: a list comes in.
 3. Strategy: look at every number.
 4. Memory: the biggest so far. If asked where it starts, say the first number.
-5. Stop: when the list ends, give back max.
-6. The lines appear shuffled. Put them in order, indent the update under the loop, then check.
-7. Paste `Write a SQL query to list students in CS101.` — the page refuses it.
+5. Stop: when the list ends.
+6. Output last: the biggest number comes out.
+7. The lines appear shuffled. Put INPUT first and OUTPUT last, indent the update under the loop, then check.
+8. Paste `Write a SQL query to list students in CS101.` — the page refuses it.
 
-`Compute the area of a rectangle given length and width` skips memory and stop after “compute once.”
+`Compute the area of a rectangle given length and width` skips memory and stop after “compute once,” then still asks for the output.
 
 A wrong decision is marked wrong. Three misses show the correct answer and a short explanation.
 
@@ -57,11 +58,11 @@ A wrong decision is marked wrong. Three misses show the correct answer and a sho
 
 ## How the questions are produced
 
-The first question is fixed: *Name what data the program is given, and what one result it should give back.*
+The first question is fixed: *Name what data the program is given.* The last Socratic question is the output.
 
-Later questions are written by the connected model from the lab question and the answers so far. A checker drops any question that already contains a step (`SET`, `FOR`, `IF`, a named algorithm, or an assignment). That turn falls back to the next fixed prompt: strategy, memory, or stop.
+Later questions are written by the connected model from the lab question and the answers so far. A checker drops any question that already contains a step (`SET`, `FOR`, `IF`, a named algorithm, or an assignment). That turn falls back to the next fixed prompt: strategy, memory, stop, or output.
 
-A line of pseudocode is written by the model from the lab question and the decision the student just made. The first two lines are always **INPUT** and **OUTPUT**.
+A line of pseudocode is written by the model from the lab question and the decision the student just made. The plan starts with **INPUT** and ends with **OUTPUT**.
 
 ## LLM
 

@@ -14,17 +14,17 @@ class ParsonsTest {
     void indentsTheBodyOfALoop() {
         List<PseudoLine> lines = List.of(
                 new PseudoLine("1", "INPUT a list", 0),
-                new PseudoLine("2", "OUTPUT the smallest number", 0),
                 new PseudoLine("3", "SET min to the first number", 0),
                 new PseudoLine("4", "FOR each number in the list", 0),
                 new PseudoLine("5", "IF this number is smaller than min, SET min to this number", 0),
                 new PseudoLine("6", "UNTIL there are no more items", 0),
-                new PseudoLine("7", "RETURN min", 0));
+                new PseudoLine("7", "RETURN min", 0),
+                new PseudoLine("2", "OUTPUT the smallest number", 0));
         Parsons.applyIndent(lines);
         assertEquals(0, lines.get(0).getIndent());
-        assertEquals(0, lines.get(3).getIndent());
-        assertEquals(1, lines.get(4).getIndent());
-        assertEquals(0, lines.get(5).getIndent());
+        assertEquals(0, lines.get(2).getIndent());
+        assertEquals(1, lines.get(3).getIndent());
+        assertEquals(0, lines.get(4).getIndent());
         assertEquals(0, lines.get(6).getIndent());
     }
 
@@ -39,17 +39,19 @@ class ParsonsTest {
                 new PseudoLine("6", "UNTIL there are no more items", 0),
                 new PseudoLine("7", "RETURN max", 0));
         List<PseudoLine> expected = Parsons.withCanonicalIndent(interviewOrder);
-        assertEquals("SET max to the first number", expected.get(2).getText());
-        assertEquals("FOR each number in the list", expected.get(3).getText());
-        assertEquals(1, expected.get(4).getIndent());
+        assertEquals("INPUT a list", expected.get(0).getText());
+        assertEquals("SET max to the first number", expected.get(1).getText());
+        assertEquals("FOR each number in the list", expected.get(2).getText());
+        assertEquals(1, expected.get(3).getIndent());
+        assertEquals("OUTPUT the largest number", expected.get(6).getText());
         List<PseudoLine> student = List.of(
                 new PseudoLine("1", "INPUT a list", 0),
-                new PseudoLine("2", "OUTPUT the largest number", 0),
                 new PseudoLine("4", "SET max to the first number", 0),
                 new PseudoLine("3", "FOR each number in the list", 0),
                 new PseudoLine("5", "IF this number is greater than max, SET max to this number", 1),
                 new PseudoLine("6", "UNTIL there are no more items", 0),
-                new PseudoLine("7", "RETURN max", 0));
+                new PseudoLine("7", "RETURN max", 0),
+                new PseudoLine("2", "OUTPUT the largest number", 0));
         assertTrue(Parsons.matches(expected, student));
     }
 

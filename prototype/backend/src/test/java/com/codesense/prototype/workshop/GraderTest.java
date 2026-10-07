@@ -9,19 +9,24 @@ import org.junit.jupiter.api.Test;
 class GraderTest {
 
     @Test
-    void acceptsACorrectIoAnswer() {
+    void acceptsACorrectInputAnswer() {
         assertTrue(Grader.fromRules(
-                        Slot.IO,
-                        "A list comes in. The biggest number comes out.",
+                        Slot.INPUT,
+                        "A list comes in.",
+                        "Find the largest number in a list.")
+                .correct());
+        assertTrue(Grader.fromRules(
+                        Slot.OUTPUT,
+                        "The biggest number comes out.",
                         "Find the largest number in a list.")
                 .correct());
     }
 
     @Test
-    void rejectsAWrongIoAnswer() {
-        assertFalse(Grader.fromRules(Slot.IO, "the sum of the list", "Find the largest number in a list.")
+    void rejectsAWrongInputOrOutputAnswer() {
+        assertFalse(Grader.fromRules(Slot.INPUT, "asdfasdf", "Smallest in a list").correct());
+        assertFalse(Grader.fromRules(Slot.OUTPUT, "the sum of the list", "Find the largest number in a list.")
                 .correct());
-        assertFalse(Grader.fromRules(Slot.IO, "asdfasdf", "Smallest in a list").correct());
     }
 
     @Test

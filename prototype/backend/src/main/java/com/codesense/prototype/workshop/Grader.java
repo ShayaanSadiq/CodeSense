@@ -19,8 +19,11 @@ public final class Grader {
     public static Grade fromRules(Slot slot, String answer, String labQuestion) {
         String a = answer == null ? "" : answer;
         String lab = labQuestion == null ? "" : labQuestion;
-        if (slot == Slot.IO) {
-            return gradeIo(a, lab);
+        if (slot == Slot.INPUT) {
+            return gradeInput(a, lab);
+        }
+        if (slot == Slot.OUTPUT) {
+            return gradeOutput(a, lab);
         }
         if (slot == Slot.STRATEGY) {
             return gradeStrategy(a, lab);
@@ -31,36 +34,60 @@ public final class Grader {
         return gradeStop(a, lab);
     }
 
-    private static Grade gradeIo(String answer, String lab) {
-        if (isLargest(lab)) {
+    private static Grade gradeInput(String answer, String lab) {
+        if (isLargest(lab) || isSmallest(lab)) {
             return new Grade(
-                    has(answer, "\\b(list|array)\\b") && has(answer, "\\b(largest|biggest|maximum|max)\\b"),
-                    "A list of numbers comes in. The largest number comes out.",
-                    "INPUT is the list the program is given. OUTPUT is the one value it must produce: the largest number in that list.");
-        }
-        if (isSmallest(lab)) {
-            return new Grade(
-                    has(answer, "\\b(list|array)\\b") && has(answer, "\\b(smallest|minimum|min)\\b"),
-                    "A list of numbers comes in. The smallest number comes out.",
-                    "INPUT is the list the program is given. OUTPUT is the one value it must produce: the smallest number in that list.");
+                    has(answer, "\\b(list|array)\\b"),
+                    "A list of numbers comes in.",
+                    "INPUT is the list the program is given.");
         }
         if (isVowels(lab)) {
             return new Grade(
-                    has(answer, "\\b(string|word|text|sentence)\\b") && has(answer, "vowel"),
-                    "A string comes in. The number of vowels comes out.",
-                    "INPUT is the text to inspect. OUTPUT is how many vowels that text contains.");
+                    has(answer, "\\b(string|word|text|sentence)\\b"),
+                    "A string comes in.",
+                    "INPUT is the text to inspect.");
         }
         if (isArea(lab)) {
             return new Grade(
-                    (has(answer, "\\blength\\b") || has(answer, "\\bwidth\\b") || has(answer, "\\brectangle\\b"))
-                            && has(answer, "\\barea\\b"),
-                    "The length and the width come in. The area comes out.",
-                    "INPUT is the two measurements of the rectangle. OUTPUT is the area, the one result of multiplying them.");
+                    has(answer, "\\blength\\b") || has(answer, "\\bwidth\\b") || has(answer, "\\brectangle\\b"),
+                    "The length and the width come in.",
+                    "INPUT is the two measurements of the rectangle.");
         }
         return new Grade(
-                has(answer, "\\b(comes in|given|input)\\b") && has(answer, "\\b(comes out|output|print|result)\\b"),
-                "The given values come in. The result comes out.",
-                "INPUT names the data the program receives. OUTPUT names the one result it should produce.");
+                has(answer, "\\b(comes in|given|input|list|string|number)\\b"),
+                "The given values come in.",
+                "INPUT names the data the program receives.");
+    }
+
+    private static Grade gradeOutput(String answer, String lab) {
+        if (isLargest(lab)) {
+            return new Grade(
+                    has(answer, "\\b(largest|biggest|maximum|max)\\b"),
+                    "The largest number comes out.",
+                    "OUTPUT is the one value it must produce: the largest number in that list.");
+        }
+        if (isSmallest(lab)) {
+            return new Grade(
+                    has(answer, "\\b(smallest|minimum|min)\\b"),
+                    "The smallest number comes out.",
+                    "OUTPUT is the one value it must produce: the smallest number in that list.");
+        }
+        if (isVowels(lab)) {
+            return new Grade(
+                    has(answer, "vowel"),
+                    "The number of vowels comes out.",
+                    "OUTPUT is how many vowels that text contains.");
+        }
+        if (isArea(lab)) {
+            return new Grade(
+                    has(answer, "\\barea\\b"),
+                    "The area comes out.",
+                    "OUTPUT is the area, the one result of multiplying length and width.");
+        }
+        return new Grade(
+                has(answer, "\\b(comes out|output|print|result)\\b"),
+                "The result comes out.",
+                "OUTPUT names the one result the program should produce.");
     }
 
     private static Grade gradeStrategy(String answer, String lab) {
@@ -102,14 +129,10 @@ public final class Grader {
     }
 
     private static Grade gradeStop(String answer, String lab) {
-        String result = isLargest(lab) ? "the largest number"
-                : isSmallest(lab) ? "the smallest number"
-                : isVowels(lab) ? "the vowel count"
-                : "the result";
         return new Grade(
-                has(answer, "\\b(end|last|no more|finish|done|return|give back)\\b"),
-                "When there are no more items, give back " + result + ".",
-                "The walk is finished after the last item, and that is when the remembered result is returned.");
+                has(answer, "\\b(end|ends|last|no more|finish|done)\\b"),
+                "When there are no more items, the walk is finished.",
+                "The walk is finished after the last item. The result itself is named later.");
     }
 
     private static boolean isLargest(String lab) {

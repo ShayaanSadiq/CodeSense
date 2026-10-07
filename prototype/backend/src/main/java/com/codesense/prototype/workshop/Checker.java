@@ -81,11 +81,17 @@ public final class Checker {
         if (q.isEmpty() || questionLeaksStep(q) || isYesNoQuestion(q) || isHowQuestion(q)) {
             return false;
         }
-        if (slot == Slot.IO) {
+        if (slot == Slot.INPUT) {
+            if (IO_OFF_TOPIC.matcher(q).find() || IO_OUT.matcher(q).find()) {
+                return false;
+            }
+            return IO_IN.matcher(q).find();
+        }
+        if (slot == Slot.OUTPUT) {
             if (IO_OFF_TOPIC.matcher(q).find()) {
                 return false;
             }
-            return IO_IN.matcher(q).find() && IO_OUT.matcher(q).find();
+            return IO_OUT.matcher(q).find();
         }
         return true;
     }

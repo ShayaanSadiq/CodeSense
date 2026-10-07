@@ -28,10 +28,11 @@ const SAMPLES = [
 ]
 
 const SLOT_LABEL = {
-  io: 'Inputs and output',
+  input: 'Input',
   strategy: 'Strategy',
   memory: 'Memory',
   stop: 'When to stop',
+  output: 'Output',
 }
 
 const METHODS = [
@@ -405,7 +406,8 @@ export default function App() {
                     <p className="parsons-hint">
                       Drag a line onto a dashed slot. Click the three boxes to
                       indent (or Tab / Shift+Tab). Arrow keys move the focused
-                      line. Indent only the IF under the FOR.
+                      line. Start with INPUT. Put OUTPUT last. Indent only the
+                      IF under the FOR.
                     </p>
                   )}
                   {session.phase === 'arrange' ? (

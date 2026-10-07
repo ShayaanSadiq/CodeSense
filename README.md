@@ -43,7 +43,7 @@ Details: [prototype/README.md](prototype/README.md)
 ## What the prototype does
 
 1. Paste one console-procedure question.
-2. Answer four decisions, one at a time: inputs and output, strategy, memory, stop. Memory and stop are skipped when nothing repeats. A wrong answer gets two more tries; the third miss shows the correct decision and why.
+2. Answer the decisions one at a time: input first, then strategy, memory, and stop when something repeats, and output last. Memory and stop are skipped when nothing repeats. A wrong answer gets two more tries; the third miss shows the correct decision and why.
 3. Confirm or rewrite each pseudocode line. The model writes INPUT, OUTPUT, and the rest of the plan from those decisions.
 4. Solve a Parsons puzzle: the lines are shuffled, you restore order and indent, then check.
 

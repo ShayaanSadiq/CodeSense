@@ -16,8 +16,11 @@ public final class Phrasing {
         String a = answer == null ? "" : answer.trim();
         String lab = labQuestion == null ? "" : labQuestion;
         List<String> prior = priorLines == null ? List.of() : priorLines;
-        if (slot == Slot.IO) {
-            return List.of("INPUT " + ioInput(a, lab), "OUTPUT " + ioOutput(a, lab));
+        if (slot == Slot.INPUT) {
+            return List.of("INPUT " + ioInput(a, lab));
+        }
+        if (slot == Slot.OUTPUT) {
+            return List.of("OUTPUT " + ioOutput(a, lab));
         }
         if (slot == Slot.STRATEGY) {
             if (find(a, "\\b(comput(e|es|ed)? once|just calculat|formula|no loop|no repeat|one step|directly)\\b")) {
@@ -125,8 +128,11 @@ public final class Phrasing {
         if (lines == null || lines.isEmpty()) {
             return false;
         }
-        if (slot == Slot.IO) {
-            return hasVerb(lines, "INPUT") && hasVerb(lines, "OUTPUT");
+        if (slot == Slot.INPUT) {
+            return hasVerb(lines, "INPUT");
+        }
+        if (slot == Slot.OUTPUT) {
+            return hasVerb(lines, "OUTPUT");
         }
         return true;
     }
