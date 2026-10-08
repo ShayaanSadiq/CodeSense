@@ -40,6 +40,8 @@ docker compose up --build
 
 Details: [prototype/README.md](prototype/README.md)
 
+The frozen installment 1 workshop lives in [installment-1/](installment-1/).
+
 ## What the prototype does
 
 1. Paste one console-procedure question.
@@ -53,7 +55,7 @@ A theory, class-design, SQL, webpage, debugging, multi-procedure, or off-scope q
 
 The prototype is installment 1: Learning Space, graded Socratic decisions, Parsons, and **Spring AI** (Ollama by default, rules fallback if no model is up). **Installment 3** is the mid-project review. **Installment 6** is the final review.
 
-1. Workshop UI, Parsons, and bugfix — this folder
+1. Workshop UI, Parsons, and bugfix — [installment-1/](installment-1/)
 2. Pseudocode translator — glossary, mark trigger words, assemble the plan
 3. Flowchart-piece puzzle — join boxes and diamonds
 4. Python — convert the plan, run it in the browser (Pyodide), predict each step
