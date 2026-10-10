@@ -2,10 +2,13 @@ package com.codesense.prototype.web;
 
 import com.codesense.prototype.model.Phase;
 import com.codesense.prototype.model.Session;
+import java.util.List;
 import com.codesense.prototype.web.dto.AnswerRequest;
 import com.codesense.prototype.web.dto.ErrorResponse;
 import com.codesense.prototype.web.dto.LinesRequest;
 import com.codesense.prototype.web.dto.StartRequest;
+import com.codesense.prototype.web.dto.TranslateRequest;
+import com.codesense.prototype.workshop.Translator;
 import com.codesense.prototype.workshop.WorkshopService;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
@@ -29,6 +32,21 @@ public class WorkshopController {
     @PostMapping
     public ResponseEntity<Session> start(@RequestBody StartRequest request) {
         Session session = workshop.start(request.getQuestion());
+        HttpStatus status = session.getPhase() == Phase.REFUSED ? HttpStatus.OK : HttpStatus.CREATED;
+        return ResponseEntity.status(status).body(session);
+    }
+
+    @GetMapping("/glossary")
+    public List<Translator.GlossaryEntry> glossary() {
+        return Translator.glossary();
+    }
+
+    @PostMapping("/translate")
+    public ResponseEntity<Session> translate(@RequestBody TranslateRequest request) {
+        List<Translator.Mark> marks = request.getMarks().stream()
+                .map(mark -> new Translator.Mark(mark.getWord(), mark.getConstruct()))
+                .toList();
+        Session session = workshop.translate(request.getQuestion(), marks);
         HttpStatus status = session.getPhase() == Phase.REFUSED ? HttpStatus.OK : HttpStatus.CREATED;
         return ResponseEntity.status(status).body(session);
     }

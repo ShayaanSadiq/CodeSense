@@ -10,6 +10,7 @@ import com.codesense.prototype.model.Phase;
 import com.codesense.prototype.model.Session;
 import com.codesense.prototype.model.Slot;
 import com.codesense.prototype.model.WorkshopConstants;
+import java.util.List;
 import org.junit.jupiter.api.Test;
 
 class WorkshopServiceTest {
@@ -368,6 +369,21 @@ class WorkshopServiceTest {
         Session wrong = workshop.answer(started.getId(), "the sum", false);
         assertEquals(1, wrong.getWrongAttempts());
         assertEquals("wrong", wrong.getVerdict());
+    }
+
+    @Test
+    void translatorBuildsAPathReadyPlan() {
+        WorkshopService workshop = new WorkshopService();
+        Session session = workshop.translate(
+                "Find the largest number in a list.",
+                List.of(
+                        new Translator.Mark("list", "INPUT"),
+                        new Translator.Mark("largest", "OUTPUT")));
+        assertEquals(Phase.ARRANGE, session.getPhase());
+        var texts = session.getConfirmedLines().stream().map(line -> line.getText()).toList();
+        assertEquals("INPUT a list of numbers", texts.get(0));
+        assertEquals("OUTPUT the largest number", texts.get(texts.size() - 1));
+        assertTrue(Parsons.isPermutation(session.getConfirmedLines(), session.getPuzzleLines()));
     }
 
     private static void walk(WorkshopService workshop, String id, String answer) {

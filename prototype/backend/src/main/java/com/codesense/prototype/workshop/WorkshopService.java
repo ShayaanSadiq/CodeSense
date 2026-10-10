@@ -99,6 +99,25 @@ public class WorkshopService {
         return keep(session);
     }
 
+    public synchronized Session translate(String labQuestion, List<Translator.Mark> marks) {
+        Session session = start(labQuestion);
+        if (session.getPhase() == Phase.REFUSED) {
+            return session;
+        }
+        List<String> texts = Translator.assemble(labQuestion, marks);
+        List<PseudoLine> lines = new ArrayList<>();
+        for (int i = 0; i < texts.size(); i++) {
+            lines.add(new PseudoLine(nextLineId(session, i), texts.get(i), 0));
+        }
+        session.setConfirmedLines(lines);
+        session.setProposedLines(new ArrayList<>());
+        session.setSlot(Slot.OUTPUT);
+        preparePuzzle(session);
+        session.setPhase(Phase.ARRANGE);
+        session.setCurrentQuestion("");
+        return keep(session);
+    }
+
     public synchronized Session answer(String id, String rawAnswer, boolean dontKnow) {
         Session session = require(id);
         if (session.getPhase() != Phase.ASK) {
