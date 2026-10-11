@@ -144,30 +144,48 @@ export default function App() {
   }
 
   async function begin(question) {
-    setLifting(true)
     setError(null)
-    if (method === 'translator') {
-      await new Promise((resolve) => setTimeout(resolve, 560))
-      setTranslateDraft(question)
-      setSession(null)
+    setPending(true)
+    setLifting(true)
+    await new Promise((resolve) =>
+      requestAnimationFrame(() => requestAnimationFrame(resolve)),
+    )
+    try {
+      if (method === 'translator') {
+        await wait(560)
+        setTranslateDraft(question)
+        setSession(null)
+        setPage('learn')
+        setHomeGone(true)
+        return
+      }
+      const [next] = await Promise.all([
+        startWorkshop(question),
+        wait(560),
+      ])
+      if (!next) {
+        return
+      }
+      remember(next)
+      setAnswer('')
+      setTranslateDraft('')
       setPage('learn')
       setHomeGone(true)
+    } catch (err) {
+      const message =
+        err instanceof Error ? err.message : 'Something went wrong.'
+      if (message === 'Session not found') {
+        localStorage.removeItem(SESSION_KEY)
+      }
+      setError(message)
+    } finally {
+      setPending(false)
       setLifting(false)
-      return
     }
-    const [next] = await Promise.all([
-      run(() => startWorkshop(question)),
-      new Promise((resolve) => setTimeout(resolve, 560)),
-    ])
-    if (!next) {
-      setLifting(false)
-      return
-    }
-    remember(next)
-    setAnswer('')
-    setTranslateDraft('')
-    setPage('learn')
-    setHomeGone(true)
+  }
+
+  function wait(ms) {
+    return new Promise((resolve) => setTimeout(resolve, ms))
   }
 
   async function assemblePlan(marks) {
@@ -355,14 +373,12 @@ export default function App() {
         )}
 
         {page === 'learn' &&
-          (lifting || session) &&
-          session?.phase !== 'refused' &&
-          session?.phase !== 'done' && (
-            <section className={session ? 'socratic in' : 'socratic arriving'}>
+          session &&
+          session.phase !== 'refused' &&
+          session.phase !== 'done' && (
+            <section className="socratic in">
               <header className="socratic-head">
-                <p className={homeGone || session ? 'socratic-title' : 'socratic-title wait'}>
-                  Q) {session?.labQuestion || draft}
-                </p>
+                <p className="socratic-title">Q) {session.labQuestion}</p>
                 <button type="button" className="ghost" onClick={reset}>
                   New question
                 </button>

@@ -22,8 +22,8 @@ export function TranslatorMark({ question, glossary, onAssemble, pending }) {
   const tokens = useMemo(() => tokenize(question), [question])
 
   function toggle(word) {
-    const key = word.toLowerCase()
-    const found = entries.find((entry) => entry.word === key)
+    const key = normalizeWord(word)
+    const found = entries.find((entry) => normalizeWord(entry.word) === key)
     if (!found) return
     setMarks((current) => {
       if (current.some((mark) => mark.word === found.word)) {
@@ -48,9 +48,9 @@ export function TranslatorMark({ question, glossary, onAssemble, pending }) {
       </p>
       <p className="translator-question">
         {tokens.map((token, index) => {
-          const key = token.toLowerCase()
-          const known = entries.some((entry) => entry.word === key)
-          const marked = marks.some((mark) => mark.word === key)
+          const key = normalizeWord(token)
+          const known = entries.some((entry) => normalizeWord(entry.word) === key)
+          const marked = marks.some((mark) => normalizeWord(mark.word) === key)
           if (!known) {
             return <span key={`${token}-${index}`}>{token}</span>
           }
@@ -111,4 +111,8 @@ export function TranslatorMark({ question, glossary, onAssemble, pending }) {
 
 function tokenize(text) {
   return (text || '').split(/(\s+)/).filter((part) => part.length > 0)
+}
+
+function normalizeWord(token) {
+  return (token || '').toLowerCase().replace(/[^a-z0-9]+/g, '')
 }
