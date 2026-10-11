@@ -3,10 +3,13 @@ import {
   answerWorkshop,
   arrangeWorkshop,
   confirmWorkshop,
+  fetchGlossary,
   getWorkshop,
   startWorkshop,
+  translateWorkshop,
 } from './api.js'
-import { ParsonsBoard } from './ParsonsBoard.jsx'
+import { ParsonsPath } from './ParsonsPath.jsx'
+import { TranslatorMark } from './TranslatorMark.jsx'
 import './App.css'
 
 const SESSION_KEY = 'codesense-workshop-id'
@@ -77,6 +80,8 @@ export default function App() {
   const [pending, setPending] = useState(false)
   const [lifting, setLifting] = useState(false)
   const [homeGone, setHomeGone] = useState(false)
+  const [translateDraft, setTranslateDraft] = useState('')
+  const [glossary, setGlossary] = useState([])
 
   useEffect(() => {
     const saved = localStorage.getItem(SESSION_KEY)
@@ -84,6 +89,10 @@ export default function App() {
     getWorkshop(saved)
       .then(setSession)
       .catch(() => localStorage.removeItem(SESSION_KEY))
+  }, [])
+
+  useEffect(() => {
+    fetchGlossary().then(setGlossary).catch(() => setGlossary([]))
   }, [])
 
   useEffect(() => {
@@ -135,14 +144,17 @@ export default function App() {
   }
 
   async function begin(question) {
-    if (method === 'translator') {
-      setError(
-        'The pseudocode translator is not made yet.',
-      )
-      return
-    }
     setLifting(true)
     setError(null)
+    if (method === 'translator') {
+      await new Promise((resolve) => setTimeout(resolve, 560))
+      setTranslateDraft(question)
+      setSession(null)
+      setPage('learn')
+      setHomeGone(true)
+      setLifting(false)
+      return
+    }
     const [next] = await Promise.all([
       run(() => startWorkshop(question)),
       new Promise((resolve) => setTimeout(resolve, 560)),
@@ -153,8 +165,16 @@ export default function App() {
     }
     remember(next)
     setAnswer('')
+    setTranslateDraft('')
     setPage('learn')
     setHomeGone(true)
+  }
+
+  async function assemblePlan(marks) {
+    const next = await run(() => translateWorkshop(translateDraft || draft, marks))
+    if (!next) return
+    remember(next)
+    setTranslateDraft('')
   }
 
   async function submitAnswer(dontKnow = false) {
@@ -189,6 +209,7 @@ export default function App() {
     setError(null)
     setLifting(false)
     setHomeGone(false)
+    setTranslateDraft('')
     setPage('learn')
   }
 
@@ -316,6 +337,23 @@ export default function App() {
           </section>
         )}
 
+        {page === 'learn' && !session && translateDraft && (
+          <section className="socratic in">
+            <header className="socratic-head">
+              <p className="socratic-title">Q) {translateDraft}</p>
+              <button type="button" className="ghost" onClick={reset}>
+                New question
+              </button>
+            </header>
+            <TranslatorMark
+              question={translateDraft}
+              glossary={glossary}
+              pending={pending}
+              onAssemble={assemblePlan}
+            />
+          </section>
+        )}
+
         {page === 'learn' &&
           (lifting || session) &&
           session?.phase !== 'refused' &&
@@ -404,10 +442,9 @@ export default function App() {
                   <p className="parsons-label">Parson&apos;s puzzle</p>
                   {session.phase === 'arrange' && (
                     <p className="parsons-hint">
-                      Drag a line onto a dashed slot. Click the three boxes to
-                      indent (or Tab / Shift+Tab). Arrow keys move the focused
-                      line. Start with INPUT. Put OUTPUT last. Indent only the
-                      IF under the FOR.
+                      Unused blocks sit on the tray. Drag each one onto the
+                      path, INPUT first and OUTPUT last. Hang the IF under the
+                      FOR.
                     </p>
                   )}
                   {session.phase === 'arrange' ? (
@@ -415,7 +452,7 @@ export default function App() {
                       {session.verdict === 'wrong' && session.feedback && (
                         <p className="banner">{session.feedback}</p>
                       )}
-                      <ParsonsBoard lines={arranged} onChange={setArranged} />
+                      <ParsonsPath lines={arranged} onChange={setArranged} />
                       <div className="actions">
                         <button
                           type="button"

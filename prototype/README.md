@@ -58,7 +58,9 @@ A wrong decision is marked wrong. Three misses show the correct answer and a sho
 
 ## How the questions are produced
 
-The first question is fixed: *Name what data the program is given.* The last Socratic question is the output.
+The Socratic method asks input first and output last. The **Pseudocode translator** marks trigger words, maps them to constructs, assembles the plan, then opens the same path-style Parsons puzzle (unused blocks on a tray, snap them onto the flow path).
+
+The first Socratic question is fixed: *Name what data the program is given.* The last Socratic question is the output.
 
 Later questions are written by the connected model from the lab question and the answers so far. A checker drops any question that already contains a step (`SET`, `FOR`, `IF`, a named algorithm, or an assignment). That turn falls back to the next fixed prompt: strategy, memory, stop, or output.
 

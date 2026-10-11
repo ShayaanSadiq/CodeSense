@@ -56,7 +56,7 @@ A theory, class-design, SQL, webpage, debugging, multi-procedure, or off-scope q
 The prototype is installment 1: Learning Space, graded Socratic decisions, Parsons, and **Spring AI** (Ollama by default, rules fallback if no model is up). **Installment 3** is the mid-project review. **Installment 6** is the final review.
 
 1. Workshop UI, Parsons, and bugfix — [installment-1/](installment-1/)
-2. Pseudocode translator — glossary, mark trigger words, assemble the plan
+2. Pseudocode translator — glossary, mark trigger words, assemble the plan, then a Blockly-style path Parsons
 3. Flowchart-piece puzzle — join boxes and diamonds
 4. Python — convert the plan, run it in the browser (Pyodide), predict each step
 5. Java track + accounts — same convert/run/predict, plus signup and saved progress

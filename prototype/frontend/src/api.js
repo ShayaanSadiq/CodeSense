@@ -28,6 +28,18 @@ export function getWorkshop(id) {
   return fetch(`/api/workshop/${id}`).then((res) => read(res))
 }
 
+export function fetchGlossary() {
+  return fetch('/api/workshop/glossary').then((res) => read(res))
+}
+
+export function translateWorkshop(question, marks) {
+  return fetch('/api/workshop/translate', {
+    method: 'POST',
+    headers: { 'Content-Type': 'application/json' },
+    body: JSON.stringify({ question, marks }),
+  }).then((res) => read(res))
+}
+
 export function startWorkshop(question) {
   return fetch('/api/workshop', {
     method: 'POST',
