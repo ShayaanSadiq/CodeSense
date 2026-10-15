@@ -1,8 +1,7 @@
 node_modules/
-prototype/backend/data/
-prototype/backend/target/
-prototype/backend/.mvn/
-*.iml
+backend/data/
+backend/target/
+backend/.mvn/
 dist/
 .DS_Store
 *.log
@@ -12,3 +11,5 @@ coverage/
 .idea/
 .vscode/
 *.tsbuildinfo
+*.iml
+hs_err_pid*.log

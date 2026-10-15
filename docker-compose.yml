@@ -1,0 +1,36 @@
+services:
+  mongo:
+    image: mongo:7
+    ports:
+      - "27017:27017"
+    volumes:
+      - codesense-mongo:/data/db
+    environment:
+      MONGO_INITDB_DATABASE: codesense
+
+  backend:
+    build: ./backend
+    ports:
+      - "8090:8090"
+    environment:
+      PORT: "8090"
+      OPENAI_API_KEY: "${OPENAI_API_KEY:-}"
+      OPENAI_BASE_URL: "${OPENAI_BASE_URL:-https://api.openai.com/v1}"
+      LLM_MODEL: "${LLM_MODEL:-gpt-4o-mini}"
+      OLLAMA_BASE_URL: "${OLLAMA_BASE_URL:-http://host.docker.internal:11434}"
+      OLLAMA_MODEL: "${OLLAMA_MODEL:-qwen3:8b}"
+      GEMINI_API_KEY: "${GEMINI_API_KEY:-}"
+      GROQ_API_KEY: "${GROQ_API_KEY:-}"
+      MONGODB_URI: "mongodb://mongo:27017/codesense"
+    depends_on:
+      - mongo
+
+  frontend:
+    build: ./frontend
+    ports:
+      - "43124:80"
+    depends_on:
+      - backend
+
+volumes:
+  codesense-mongo:
