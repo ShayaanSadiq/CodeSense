@@ -482,7 +482,7 @@ export default function App() {
           onClick={reset}
           aria-label="CodeSense home"
         >
-          <img src="/logo.png?v=2" alt="CodeSense" />
+          <img src="/logo.png?v=3" alt="CodeSense" />
         </button>
         <nav className="nav">
           <button

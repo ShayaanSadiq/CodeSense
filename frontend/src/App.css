@@ -127,10 +127,6 @@ body,
   background: var(--mint);
 }
 
-html[data-theme="dark"] .brand img {
-  filter: invert(1) hue-rotate(180deg) saturate(1.15);
-}
-
 .nav {
   display: flex;
   flex-direction: column;
