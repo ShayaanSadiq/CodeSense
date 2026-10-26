@@ -3,6 +3,7 @@ package com.codesense.prototype.web;
 import com.codesense.prototype.account.AccountService;
 import com.codesense.prototype.model.Account;
 import com.codesense.prototype.web.dto.AuthRequest;
+import jakarta.validation.Valid;
 import java.util.LinkedHashMap;
 import java.util.Map;
 import org.springframework.http.HttpStatus;
@@ -26,12 +27,12 @@ public class AuthController {
 
     @PostMapping("/signup")
     @ResponseStatus(HttpStatus.CREATED)
-    public Map<String, Object> signup(@RequestBody AuthRequest request) {
+    public Map<String, Object> signup(@Valid @RequestBody AuthRequest request) {
         return pack(accounts.signup(request.getName(), request.getUsername(), request.getPassword()));
     }
 
     @PostMapping("/login")
-    public Map<String, Object> login(@RequestBody AuthRequest request) {
+    public Map<String, Object> login(@Valid @RequestBody AuthRequest request) {
         return pack(accounts.login(request.getUsername(), request.getPassword()));
     }
 

@@ -50,6 +50,16 @@ class AccountServiceTest {
     }
 
     @Test
+    void rejectsOddUsernames() throws Exception {
+        var dir = Files.createTempDirectory("codesense-acc-");
+        var properties = new CodeSenseProperties();
+        properties.setDataDir(dir.toString());
+        var accounts = new AccountService(new ObjectMapper(), properties);
+        assertThrows(WorkshopException.class, () -> accounts.signup("Ada", "a", "secret"));
+        assertThrows(WorkshopException.class, () -> accounts.signup("Ada", "ada space", "secret"));
+    }
+
+    @Test
     void rejectsTakenUsernameAndBadPassword() throws Exception {
         var dir = Files.createTempDirectory("codesense-acc-");
         var properties = new CodeSenseProperties();

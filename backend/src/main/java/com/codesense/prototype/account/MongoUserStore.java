@@ -163,8 +163,8 @@ public class MongoUserStore implements UserStore {
         }
     }
 
-    private static String mongoDown(Exception error) {
-        return "MongoDB is not reachable. Start it with docker compose, then try again. ("
-                + error.getMessage() + ")";
+    private String mongoDown(Exception error) {
+        LOG.warn("MongoDB is not reachable: {}", error.toString());
+        return "MongoDB is not reachable. Start it with docker compose, then try again.";
     }
 }

@@ -1,12 +1,18 @@
 package com.codesense.prototype.web.dto;
 
+import jakarta.validation.Valid;
+import jakarta.validation.constraints.Size;
 import java.util.ArrayList;
 import java.util.List;
 
 public class TranslateRequest {
 
+    @Size(max = 4000)
     private String question;
+    @Size(max = 32)
     private String kind;
+    @Valid
+    @Size(max = 50)
     private List<Mark> marks = new ArrayList<>();
 
     public String getQuestion() {
@@ -34,7 +40,9 @@ public class TranslateRequest {
     }
 
     public static class Mark {
+        @Size(max = 200)
         private String word;
+        @Size(max = 40)
         private String construct;
 
         public String getWord() {

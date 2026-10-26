@@ -12,6 +12,9 @@ import java.nio.charset.StandardCharsets;
 import java.nio.file.Files;
 import java.security.MessageDigest;
 import java.security.SecureRandom;
+import java.util.regex.Pattern;
+import javax.crypto.SecretKeyFactory;
+import javax.crypto.spec.PBEKeySpec;
 import java.time.LocalDateTime;
 import java.time.format.DateTimeFormatter;
 import java.util.HexFormat;
@@ -24,6 +27,8 @@ import org.springframework.stereotype.Service;
 public class AccountService {
 
     private static final DateTimeFormatter STAMP = DateTimeFormatter.ofPattern("yyyy-MM-dd HH:mm");
+    private static final Pattern USERNAME = Pattern.compile("^[a-z0-9._-]{3,32}$");
+    private static final int PBKDF2_ITERS = 120_000;
     private final UserStore store;
     private final SecureRandom random = new SecureRandom();
 
@@ -39,11 +44,14 @@ public class AccountService {
 
     public synchronized Account signup(String name, String username, String password) {
         String user = cleanUser(username);
-        if (user.length() < 3) {
-            throw new WorkshopException(400, "Pick a username of at least 3 letters.");
+        if (!USERNAME.matcher(user).matches()) {
+            throw new WorkshopException(400, "Usernames use 3-32 letters, numbers, dots, or dashes.");
         }
-        if (password == null || password.length() < 4) {
-            throw new WorkshopException(400, "Pick a password of at least 4 characters.");
+        if (password == null || password.length() < 4 || password.length() > 128) {
+            throw new WorkshopException(400, "Pick a password of 4 to 128 characters.");
+        }
+        if (name != null && name.trim().length() > 80) {
+            throw new WorkshopException(400, "Pick a shorter name.");
         }
         if (findUser(user) != null) {
             throw new WorkshopException(400, "That username is already taken.");
@@ -60,8 +68,11 @@ public class AccountService {
     }
 
     public synchronized Account login(String username, String password) {
+        if (password == null || password.length() > 128) {
+            throw new WorkshopException(401, "Username or password is wrong.");
+        }
         Account account = findUser(cleanUser(username));
-        if (account == null || !account.getPasswordHash().equals(hash(password, account.getId()))) {
+        if (account == null || !passwordMatches(account, password)) {
             throw new WorkshopException(401, "Username or password is wrong.");
         }
         account.setToken(newToken());
@@ -173,12 +184,23 @@ public class AccountService {
         return username == null ? "" : username.trim().toLowerCase();
     }
 
+    private static boolean passwordMatches(Account account, String password) {
+        String expected = account.getPasswordHash();
+        String actual = hash(password, account.getId());
+        return MessageDigest.isEqual(
+                expected.getBytes(StandardCharsets.UTF_8),
+                actual.getBytes(StandardCharsets.UTF_8));
+    }
+
     private static String hash(String password, String salt) {
         try {
-            MessageDigest digest = MessageDigest.getInstance("SHA-256");
-            byte[] hashed = digest.digest((salt + ":" + (password == null ? "" : password))
-                    .getBytes(StandardCharsets.UTF_8));
-            return hex(hashed);
+            PBEKeySpec spec = new PBEKeySpec(
+                    (password == null ? "" : password).toCharArray(),
+                    salt.getBytes(StandardCharsets.UTF_8),
+                    PBKDF2_ITERS,
+                    256);
+            SecretKeyFactory factory = SecretKeyFactory.getInstance("PBKDF2WithHmacSHA256");
+            return hex(factory.generateSecret(spec).getEncoded());
         } catch (Exception error) {
             throw new IllegalStateException(error);
         }

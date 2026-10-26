@@ -5,6 +5,7 @@ import static org.junit.jupiter.api.Assertions.assertFalse;
 import static org.junit.jupiter.api.Assertions.assertNotEquals;
 import static org.junit.jupiter.api.Assertions.assertNotNull;
 import static org.junit.jupiter.api.Assertions.assertNull;
+import static org.junit.jupiter.api.Assertions.assertThrows;
 import static org.junit.jupiter.api.Assertions.assertTrue;
 
 import com.codesense.prototype.llm.LlmCompleter;
@@ -17,6 +18,14 @@ import java.util.List;
 import org.junit.jupiter.api.Test;
 
 class WorkshopServiceTest {
+
+    @Test
+    void unknownSessionIsNotFound() {
+        WorkshopService workshop = new WorkshopService();
+        WorkshopException error = assertThrows(WorkshopException.class, () -> workshop.answer("missing", "x", false));
+        assertEquals(404, error.getStatus());
+        assertEquals("Session not found", error.getMessage());
+    }
 
     @Test
     void refusesSql() {

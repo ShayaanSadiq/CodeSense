@@ -1,10 +1,16 @@
 package com.codesense.prototype.web.dto;
 
+import jakarta.validation.constraints.Size;
+
 public class LlmConfigRequest {
 
+    @Size(max = 32)
     private String provider;
+    @Size(max = 80)
     private String model;
+    @Size(max = 256)
     private String apiKey;
+    @Size(max = 200)
     private String baseUrl;
 
     public String getProvider() {

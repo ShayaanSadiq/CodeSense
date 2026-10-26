@@ -1,10 +1,16 @@
 package com.codesense.prototype.web.dto;
 
+import jakarta.validation.constraints.Size;
+
 public class CodeRequest {
 
+    @Size(max = 4000)
     private String input;
+    @Size(max = 32)
     private String language = "python";
+    @Size(max = 4000)
     private String stdin = "";
+    @Size(max = 20000)
     private String source = "";
 
     public String getInput() {

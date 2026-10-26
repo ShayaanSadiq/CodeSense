@@ -1,11 +1,21 @@
 server:
   port: ${PORT:8090}
+  tomcat:
+    max-http-form-post-size: 256KB
+    max-swallow-size: 256KB
+  max-http-request-header-size: 16KB
 
 spring:
   application:
     name: codesense-prototype-api
   jackson:
     default-property-inclusion: non_null
+  codec:
+    max-in-memory-size: 256KB
+  servlet:
+    multipart:
+      max-file-size: 256KB
+      max-request-size: 256KB
   data:
     mongodb:
       uri: ${MONGODB_URI:mongodb://127.0.0.1:27017/codesense}
@@ -34,3 +44,4 @@ codesense:
   gemini-api-key: ${GEMINI_API_KEY:}
   groq-api-key: ${GROQ_API_KEY:}
   llm-model: ${LLM_MODEL:}
+  frontend-origin: ${CODESENSE_FRONTEND_ORIGIN:}

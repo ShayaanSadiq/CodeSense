@@ -1,9 +1,14 @@
 package com.codesense.prototype.web.dto;
 
+import jakarta.validation.constraints.Size;
+
 public class AuthRequest {
 
+    @Size(max = 80)
     private String name = "";
+    @Size(max = 32)
     private String username = "";
+    @Size(max = 128)
     private String password = "";
 
     public String getName() {

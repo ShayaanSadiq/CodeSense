@@ -1,9 +1,14 @@
 package com.codesense.prototype.web.dto;
 
+import jakarta.validation.constraints.Size;
+
 public class WhyCardRequest {
 
+    @Size(max = 4000)
     private String question;
+    @Size(max = 40)
     private String construct;
+    @Size(max = 400)
     private String phrase;
 
     public String getQuestion() {

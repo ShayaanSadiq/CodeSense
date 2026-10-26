@@ -44,7 +44,7 @@ export function saveLlm(body) {
 }
 
 export function getWorkshop(id) {
-  return fetch(`/api/workshop/${id}`).then((res) => read(res))
+  return fetch(`/api/workshop/${id}`, { headers: headers() }).then((res) => read(res))
 }
 
 export function fetchGlossary() {

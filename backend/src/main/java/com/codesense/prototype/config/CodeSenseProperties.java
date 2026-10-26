@@ -14,6 +14,7 @@ public class CodeSenseProperties {
     private String geminiApiKey = "";
     private String groqApiKey = "";
     private String llmModel = "";
+    private String frontendOrigin = "";
 
     public Path dataPath() {
         return Path.of(dataDir);
@@ -89,5 +90,13 @@ public class CodeSenseProperties {
 
     public void setLlmModel(String llmModel) {
         this.llmModel = llmModel;
+    }
+
+    public String getFrontendOrigin() {
+        return frontendOrigin;
+    }
+
+    public void setFrontendOrigin(String frontendOrigin) {
+        this.frontendOrigin = frontendOrigin == null ? "" : frontendOrigin;
     }
 }

@@ -70,9 +70,10 @@ public class LlmService implements LlmCompleter {
         }
         LlmConfigFile config = new LlmConfigFile();
         config.provider = nextProvider.value();
-        config.model = nextModel == null ? "" : nextModel.trim();
-        config.apiKey = nextKey == null || nextKey.isBlank() ? null : nextKey;
-        config.baseUrl = nextBaseUrl == null || nextBaseUrl.isBlank() ? null : nextBaseUrl;
+        config.model = safeModel(nextModel);
+        config.apiKey = safeKey(nextKey);
+        // Client-supplied base URLs are ignored (SSRF). Use env/server defaults only.
+        config.baseUrl = null;
         writeSaved(config);
         reload();
         return publicStatus();
@@ -92,7 +93,7 @@ public class LlmService implements LlmCompleter {
         if (saved != null && "openai".equals(saved.provider) && notBlank(saved.apiKey)) {
             return cloud(LlmMode.OPENAI, LlmProvider.OPENAI,
                     first(saved.model, properties.getLlmModel(), "gpt-4o-mini"),
-                    first(saved.baseUrl, properties.getOpenaiBaseUrl()),
+                    properties.getOpenaiBaseUrl(),
                     saved.apiKey);
         }
         if (saved != null && "gemini".equals(saved.provider) && notBlank(saved.apiKey)) {
@@ -156,7 +157,11 @@ public class LlmService implements LlmCompleter {
     }
 
     private Resolved cloud(LlmMode mode, LlmProvider provider, String model, String baseUrl, String key) {
-        String url = baseUrl == null ? null : baseUrl.replaceAll("/$", "") + "/chat/completions";
+        if (baseUrl == null || baseUrl.isBlank()) {
+            return new Resolved(mode, provider, model, true, null, null, key, ollamaRoot());
+        }
+        String root = httpUrl(baseUrl, "https://api.openai.com/v1");
+        String url = root.replaceAll("/$", "") + "/chat/completions";
         return new Resolved(mode, provider, model, true, null, url, key, ollamaRoot());
     }
 
@@ -213,9 +218,43 @@ public class LlmService implements LlmCompleter {
     }
 
     private String ollamaRoot() {
-        String fromSaved = readSaved() != null ? readSaved().baseUrl : null;
-        String raw = notBlank(fromSaved) ? fromSaved : properties.getOllamaBaseUrl();
-        return raw.replaceAll("/v1/?$", "");
+        return httpUrl(properties.getOllamaBaseUrl(), "http://127.0.0.1:11434");
+    }
+
+    private static String httpUrl(String raw, String fallback) {
+        String value = notBlank(raw) ? raw.trim() : fallback;
+        try {
+            URI uri = URI.create(value);
+            String scheme = uri.getScheme() == null ? "" : uri.getScheme().toLowerCase();
+            if (!"http".equals(scheme) && !"https".equals(scheme)) {
+                return fallback.replaceAll("/v1/?$", "");
+            }
+            return value.replaceAll("/v1/?$", "");
+        } catch (Exception ignored) {
+            return fallback.replaceAll("/v1/?$", "");
+        }
+    }
+
+    private static String safeModel(String model) {
+        if (model == null || model.isBlank()) {
+            return "";
+        }
+        String trimmed = model.trim();
+        if (trimmed.length() > 80 || !trimmed.matches("[A-Za-z0-9._:/-]+")) {
+            throw new IllegalArgumentException("Choose a valid model name.");
+        }
+        return trimmed;
+    }
+
+    private static String safeKey(String key) {
+        if (key == null || key.isBlank()) {
+            return null;
+        }
+        String trimmed = key.trim();
+        if (trimmed.length() > 256) {
+            throw new IllegalArgumentException("That API key is too long.");
+        }
+        return trimmed;
     }
 
     private LlmConfigFile readSaved() {
